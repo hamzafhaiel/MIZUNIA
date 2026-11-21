@@ -20,7 +20,7 @@ Open the URL printed by Vite. For a production preview, use `npm run build` foll
 3. **Réserves** shows the same cistern inventory as the map. To register another فاسقية, use **Ajouter une citerne** on the map, place it, and assign a sensor ID. Open its record in **Réserves** and use **Envoyer le relevé** to simulate telemetry.
 4. Under **Réserves**, open the **Parc Hydraulique model** to inspect the illustrative 3D irrigation site, its separate sensor history, and simulated release routes. Use **Scénarios** to trigger low pressure, restore supply, or simulate rainfall.
 
-Use **Voir l’intro** to replay the opening. To start a presentation with the full animation and then land on the map, open `/?intro=1#/map` on your local server. **Skip intro** and **Esc** dismiss it. Automatic playback respects reduced-motion preferences.
+The full intro plays when you open or reload a dashboard link, including when your system has reduced motion enabled. Navigation within the dashboard continues without replaying it. Use **Skip intro** or **Esc** to go straight to the requested view.
 
 ## Data and implementation
 

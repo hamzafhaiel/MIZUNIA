@@ -16,9 +16,11 @@ const landmarks = [
 ] satisfies (Location & { name: string })[]
 
 const formatLiters = (liters: number) => liters.toLocaleString('fr-TN', { maximumFractionDigits: 1 }) + ' L'
+const readingDate = new Intl.DateTimeFormat('fr-TN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Tunis' })
 const sectorNames = { north: 'Secteur nord', central: 'Abords du parc', east: 'Secteur est' } as const
 const reportLabels = { 'No water': 'Coupure d’eau', 'Low pressure': 'Pression faible' } as const
 const parkStatus = { Open: 'Signalée', 'Under review': 'En cours d’examen', Monitoring: 'Sous surveillance', Resolved: 'Résolue' } as const
+const parkSeverity = { Low: 'Faible', Moderate: 'Modérée', Critical: 'Critique' } as const
 
 export function CisternWorkspace({ households, parkIncident, directory, routeId }: {
   households: HouseholdState
@@ -37,18 +39,21 @@ export function CisternWorkspace({ households, parkIncident, directory, routeId 
   const showReports = reportLayer ?? routeId === 'reports'
   const selected = cisterns.find(cistern => cistern.id === (directory ? routeId ?? selectedId : selectedId)) ?? cisterns[0]
   const pendingReports = households.reports.filter(report => !report.assistance)
+  const reportingCisterns = cisterns.filter(cistern => cistern.reading !== null).length
   const priorityReports = [...pendingReports].sort((a, b) =>
     Number(b.issue === 'No water') - Number(a.issue === 'No water') || a.submitted - b.submitted)
   const priorityReport = priorityReports[0]
   const firstCase = parkIncident ? {
     href: '#/incidents/' + parkIncident.id,
     title: parkIncident.status === 'Monitoring' ? 'Rétablissement à vérifier au parc' : 'Basse pression au Parc Hydraulique',
-    detail: parkStatus[parkIncident.status] + ' · ' + parkIncident.id,
+    detail: parkSeverity[parkIncident.severity] + ' · ' + parkStatus[parkIncident.status] + ' · ' + parkIncident.id,
+    action: parkIncident.status === 'Monitoring' ? 'Vérifier' : 'Examiner',
     critical: parkIncident.severity === 'Critical',
   } : priorityReport ? {
     href: '#/incidents/' + priorityReport.id,
     title: reportLabels[priorityReport.issue] + ' · Maison ' + priorityReport.home,
-    detail: sectorNames[homes[priorityReport.home].area] + ' · ' + priorityReport.id,
+    detail: sectorNames[homes[priorityReport.home].area] + ' · ' + (households.confirmed[homes[priorityReport.home].area] ? 'Zone confirmée (simulation)' : 'À vérifier'),
+    action: 'Ouvrir le dossier',
     critical: false,
   } : null
   const queuedReports = parkIncident ? priorityReports : priorityReports.slice(1)
@@ -136,15 +141,15 @@ export function CisternWorkspace({ households, parkIncident, directory, routeId 
       {firstCase ? <a className="operations-priority" data-critical={firstCase.critical} href={firstCase.href}>
         <span className="operations-priority-icon"><TriangleAlert size={20} /></span>
         <span><strong>{firstCase.title}</strong><small>{firstCase.detail}</small></span>
-        <span className="operations-priority-action">Examiner <ArrowRight size={16} /></span>
+        <span className="operations-priority-action">{firstCase.action} <ArrowRight size={16} /></span>
       </a> : <div className="operations-priority is-clear">
         <span className="operations-priority-icon"><CircleCheck size={20} /></span>
-        <span><strong>Aucune alerte à traiter</strong><small>Borj Râs · Simulation</small></span>
+        <span><strong>Aucune nouvelle intervention</strong><small>Consultez les incidents pour le suivi des dossiers.</small></span>
       </div>}
       <dl className="operations-summary">
-        <div><dt>Signalements à traiter</dt><dd>{pendingReports.length}</dd></div>
-        <div><dt>Zones confirmées</dt><dd>{Object.keys(households.confirmed).length}</dd></div>
-        <div><dt>Citernes cartographiées</dt><dd>{cisterns.length}</dd></div>
+        <div><dt>Foyers sans première réponse</dt><dd>{pendingReports.length}</dd></div>
+        <div><dt>Secteurs confirmés en simulation</dt><dd>{Object.keys(households.confirmed).length}</dd></div>
+        <div><dt>Citernes avec relevé simulé</dt><dd>{reportingCisterns}/{cisterns.length}</dd></div>
       </dl>
     </div>}
     <div className={'cistern-layout' + (directory ? ' cistern-directory' : '')}>
@@ -185,7 +190,7 @@ export function CisternWorkspace({ households, parkIncident, directory, routeId 
           {error && <p className="cistern-error" role="alert">{error}</p>}
           <button type="submit" className="button primary"><Check size={17} /> Enregistrer et associer</button>
         </form> : directory ? <div className="cistern-directory-content" lang="fr">
-          <div><div className="cistern-inventory-heading"><h2>{cisterns.length} citernes cartographiées</h2><p>360 évoquées par l’équipe, total à vérifier sur le terrain.</p></div>
+          <div><div className="cistern-inventory-heading"><h2>{cisterns.length} citernes cartographiées</h2><p>Inventaire pilote. L’équipe évoque 360 citernes, un total à vérifier sur le terrain.</p></div>
           <ul className="cistern-list" aria-label="Citernes cartographiées">
             {cisterns.map(cistern => <li key={cistern.id}><a href={'#/reserves/' + cistern.id} aria-current={cistern.id === selected.id ? 'true' : undefined} onClick={() => { setSelectedId(cistern.id); setNotice('') }}>
               <span className="cistern-list-icon" data-ready={Boolean(cistern.reading)}><Droplet size={16} /></span>
@@ -195,8 +200,8 @@ export function CisternWorkspace({ households, parkIncident, directory, routeId 
           </ul></div>
           <section className="cistern-reading" aria-labelledby="cistern-reading-title">
             <div className="cistern-reading-heading"><h3 id="cistern-reading-title">{selected.name}</h3><Radio size={17} /></div>
-            <p>{selected.sensorId} · {selected.reading ? 'Relevé simulé à ' + formatTime(selected.reading.at) : 'Associé · Premier relevé en attente'}</p>
-            <dl><div><dt>Volume relevé</dt><dd>{selected.reading ? formatLiters(selected.reading.liters) : '—'}</dd></div><div><dt>Capacité</dt><dd>{formatLiters(selected.capacity)}</dd></div></dl>
+            <p>{selected.sensorId} · {selected.reading ? 'Relevé du ' + readingDate.format(selected.reading.at) : 'Associé · Premier relevé en attente'}</p>
+            <dl><div><dt>Volume stocké simulé</dt><dd>{selected.reading ? formatLiters(selected.reading.liters) : '—'}</dd></div><div><dt>Capacité nominale</dt><dd>{formatLiters(selected.capacity)}</dd></div></dl>
             <form key={selected.id} onSubmit={simulateReading}>
               <label>Volume simulé (L)<input name="liters" type="number" inputMode="decimal" min="0" max={selected.capacity} step="0.1" required defaultValue={selected.reading?.liters ?? Math.floor(selected.capacity / 2)} /></label>
               <button type="submit" className="button secondary">Envoyer le relevé</button>
@@ -204,16 +209,16 @@ export function CisternWorkspace({ households, parkIncident, directory, routeId 
           </section>
         </div> : <>
           <section className="operations-queue" aria-labelledby="operations-queue-title">
-            <div className="operations-queue-heading"><h2 id="operations-queue-title">Signalements</h2><a href="#/incidents">Voir les incidents <ArrowRight size={15} /></a></div>
+            <div className="operations-queue-heading"><h2 id="operations-queue-title">Foyers à traiter</h2><a href="#/incidents">Tous les dossiers <ArrowRight size={15} /></a></div>
             {queuedReports.length ? <ul className="operations-cases">{queuedReports.slice(0, 3).map(report => <li key={report.id}>
-              <a href={'#/incidents/' + report.id}><House size={16} /><span><strong>Maison {report.home} · {reportLabels[report.issue]}</strong><small>{sectorNames[homes[report.home].area]} · {report.id}</small></span><ArrowRight size={15} /></a>
+              <a href={'#/incidents/' + report.id}><House size={16} /><span><strong>Maison {report.home} · {reportLabels[report.issue]}</strong><small>{sectorNames[homes[report.home].area]} · Signalé à {formatTime(report.submitted)}</small></span><ArrowRight size={15} /></a>
             </li>)}</ul> : <p className="operations-clear">{priorityReport ? 'Aucun autre signalement à traiter.' : 'Aucun signalement à traiter.'}</p>}
           </section>
           <section className="cistern-reading" aria-labelledby="map-selection-title">
             <div className="cistern-reading-heading"><h3 id="map-selection-title">{selected.name}</h3><Droplet size={18} /></div>
-            <p>{selected.id} · {selected.sensorId}{selected.reading && ' · ' + formatTime(selected.reading.at)}</p>
-            <dl><div><dt>Dernier relevé simulé</dt><dd>{selected.reading ? formatLiters(selected.reading.liters) : 'En attente'}</dd></div><div><dt>Capacité</dt><dd>{formatLiters(selected.capacity)}</dd></div></dl>
-            <a className="button secondary" href={'#/reserves/' + selected.id}>Ouvrir la fiche <ArrowRight size={15} /></a>
+            <p>{selected.id} · {selected.reading ? 'Relevé du ' + readingDate.format(selected.reading.at) : 'Premier relevé en attente'}</p>
+            <dl><div><dt>Volume stocké simulé</dt><dd>{selected.reading ? formatLiters(selected.reading.liters) : '—'}</dd></div><div><dt>Capacité nominale</dt><dd>{formatLiters(selected.capacity)}</dd></div></dl>
+            <a className="button secondary" href={'#/reserves/' + selected.id}>Consulter la citerne <ArrowRight size={15} /></a>
           </section>
         </>}
         {notice && <p className="cistern-notice" role="status">{notice}</p>}

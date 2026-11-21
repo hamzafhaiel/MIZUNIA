@@ -1,4 +1,4 @@
-import { Activity as Pulse, ChevronDown, CircleAlert, ClipboardList, Clock3, Droplet, Gauge, LayoutDashboard, Play, Radio, SlidersHorizontal, TriangleAlert, Waves, Wifi, X } from 'lucide-react'
+import { Activity as Pulse, ChevronDown, CircleAlert, ClipboardList, Clock3, Droplet, Gauge, LayoutDashboard, Radio, SlidersHorizontal, TriangleAlert, Waves, Wifi, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { lowPressure, lowReserve, supplyStatus } from './model.ts'
@@ -20,10 +20,10 @@ export const navigation = [
   { id: 'reserves', label: 'Réserves', icon: Droplet },
 ] as const
 
-export function Header({ onDemo, onIntro, state }: { onDemo: () => void; onIntro: () => void; state: DashboardState }) {
+export function Header({ onDemo, state }: { onDemo: () => void; state: DashboardState }) {
   const reporting = state.sensors.filter(sensor => sensor.online).length
   return <header className="topbar">
-    <div className="header-actions" lang="fr"><span className={'header-connectivity' + (reporting === 0 ? ' offline' : '')}><Radio size={13} /> {reporting}/{state.sensors.length} capteurs en ligne</span><span className="simulation-dot"><i /> Simulation</span><button type="button" className="button intro-launch" onClick={onIntro}><Play size={14} /><span>Voir l’intro</span></button><button className="button secondary demo-button" onClick={onDemo}><SlidersHorizontal size={15} /><span>Scénarios</span></button></div>
+    <div className="header-actions" lang="fr"><span className={'header-connectivity' + (reporting === 0 ? ' offline' : '')}><Radio size={13} /> {reporting}/{state.sensors.length} capteurs en ligne</span><span className="simulation-dot"><i /> Simulation</span><button className="button secondary demo-button" onClick={onDemo}><SlidersHorizontal size={15} /><span>Scénarios</span></button></div>
   </header>
 }
 

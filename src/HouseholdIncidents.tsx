@@ -9,6 +9,13 @@ import './households.css'
 const homeIds = Object.keys(homes) as HomeId[]
 const issueTimes = ['Within the last hour', '1–6 hours ago', '6–24 hours ago', 'More than 24 hours ago', 'Unknown']
 
+function reportStatus(report: HouseholdReport, state: HouseholdState) {
+  if (report.assistance === 'Non-drinking water') return 'Simulated pickup recorded'
+  if (report.assistance === 'Drinking-water referral') return 'Referral logged · Delivery unconfirmed'
+  if (state.confirmed[homes[report.home].area]) return 'Area confirmed in simulation · Response pending'
+  return 'Report received · Area verification pending'
+}
+
 export function ReportWaterCut({ state, phone, onSubmit }: {
   state: HouseholdState
   phone: boolean
@@ -62,7 +69,7 @@ export function ReportWaterCut({ state, phone, onSubmit }: {
           <button className="button secondary" type="submit">Check status</button>
         </form>
         {showTracking && <p role="status">{matched
-          ? matched.assistance ?? (state.confirmed[homes[matched.home].area] ? 'Area outage confirmed in simulation' : 'Report received · Awaiting verification')
+          ? reportStatus(matched, state)
           : 'No report found with that reference.'}</p>}
       </details>
     </section>
@@ -81,11 +88,18 @@ export function HouseholdIncidents({ state, reportId, onConfirmation, onAssistan
   const zone = areas[area]
   const reports = state.reports.filter(report => homes[report.home].area === area)
   const selected = reports.find(report => report.id === selection) ?? reports[0]
-  const open = reports.filter(report => !report.assistance).length
+  const awaitingResponse = state.reports.filter(report => !report.assistance).length
+  const areaAwaitingResponse = reports.filter(report => !report.assistance).length
+  const cutoffReports = reports.filter(report => report.issue === 'No water').length
   const confirmed = state.confirmed[area]
   const remaining = reserveRemaining(state, area)
-  const served = state.reports.filter(report => report.assistance === 'Non-drinking water').length
+  const pickups = state.reports.filter(report => report.assistance === 'Non-drinking water').length
   const referrals = state.reports.filter(report => report.assistance === 'Drinking-water referral').length
+  const pickupAllowed = canRecordPickup(state, area)
+  const pickupStatus = pickupAllowed ? `Simulated pickup at ${zone.basin} · ${pickupLiters} L`
+    : !confirmed ? 'Verify the area outage before recording a pickup.'
+    : !zone.pickup ? 'Pickup unavailable in this area.'
+    : `Pickup requires at least ${pickupLiters} L in the non-drinking reserve.`
 
   function chooseArea(id: AreaId) {
     setArea(id)
@@ -99,44 +113,44 @@ export function HouseholdIncidents({ state, reportId, onConfirmation, onAssistan
     </div>
 
     <dl className="household-summary">
-      <div><dt>Households reporting</dt><dd>{state.reports.length}</dd></div>
-      <div><dt>Confirmed areas</dt><dd>{Object.keys(state.confirmed).length}</dd></div>
-      <div><dt>Households supplied</dt><dd>{served}</dd></div>
-      <div><dt>Drinking-water referrals</dt><dd>{referrals}</dd></div>
+      <div><dt>Awaiting first response</dt><dd>{awaitingResponse}</dd></div>
+      <div><dt>Areas confirmed in simulation</dt><dd>{Object.keys(state.confirmed).length}</dd></div>
+      <div><dt>Simulated pickups logged</dt><dd>{pickups}</dd></div>
+      <div><dt>Drinking-water referrals logged</dt><dd>{referrals}</dd></div>
     </dl>
 
     <div className="household-grid">
       <section className="panel household-queue" aria-labelledby="household-queue-title">
-        <div className="panel-heading"><div><h2 id="household-queue-title">Household reports</h2><p>{open} awaiting action in {zone.name}</p></div><a className="household-map-link" href="#/map/reports">Show reports on map <ArrowRight size={14} /></a></div>
+        <div className="panel-heading"><div><h2 id="household-queue-title">Household reports</h2><p>{reports.length} reported · {areaAwaitingResponse} awaiting first response</p></div><a className="household-map-link" href="#/map/reports">Show reports on map <ArrowRight size={14} /></a></div>
         <div className="household-area-tabs" aria-label="Filter by service area">
           {areaIds.map(id => <button key={id} type="button" aria-pressed={id === area} onClick={() => chooseArea(id)}>{areas[id].name}</button>)}
         </div>
         <div className="household-area-status">
-          <Badge tone={confirmed ? 'red' : open >= 2 ? 'amber' : 'neutral'}>{confirmed ? 'Confirmed in simulation' : open >= 2 ? 'Suspected area outage' : 'Awaiting area verification'}</Badge>
+          <Badge tone={confirmed ? 'red' : cutoffReports >= 2 ? 'amber' : 'neutral'}>{confirmed ? 'Confirmed in simulation' : cutoffReports >= 2 ? 'Multiple cut reports · Unverified' : reports.length ? 'Awaiting area verification' : 'No reports received'}</Badge>
           {reports.length > 0 && !confirmed && <button className="household-text-button" type="button" onClick={() => onConfirmation(area)}>Record simulated confirmation</button>}
           {confirmed && <small>Recorded at {formatTime(confirmed)}</small>}
         </div>
         {reports.length ? <ul className="household-report-list">{reports.map(report => <li key={report.id}>
           <button type="button" aria-pressed={selected?.id === report.id} onClick={() => setSelection(report.id)}>
             <span className="household-row-icon"><House size={16} /></span>
-            <span><strong>House {report.home}</strong><small>{report.assistance ?? report.issue}</small></span>
+            <span><strong>House {report.home} · {report.issue}</strong><small>{reportStatus(report, state)}</small></span>
             <time dateTime={new Date(report.submitted).toISOString()}>{formatTime(report.submitted)}</time>
           </button>
         </li>)}</ul> : <p className="household-no-reports">No household reports in this area.</p>}
-        {selected && <div className="household-case"><span>{selected.id} · {selected.channel}</span><strong>{selected.started}</strong></div>}
+        {selected && <div className="household-case"><span>{selected.id} · {selected.channel}</span><strong>Reported onset: {selected.started}</strong></div>}
       </section>
     <section className="panel household-response" aria-labelledby="household-response-title">
       <div className="response-area">
         <span className="household-symbol"><Droplet size={21} /></span>
         <div><h2 id="household-response-title">Water assistance · {zone.name}</h2><p>{zone.basin} <b lang="ar" dir="rtl">فاسقية</b> · {zone.status}</p></div>
       </div>
-      <dl><dt>Available for non-drinking use</dt><dd>{remaining.toLocaleString('en')} L</dd></dl>
+      <dl><dt>Simulated non-drinking allocation</dt><dd>{remaining.toLocaleString('en')} L</dd></dl>
       <div className="response-actions">
         {!selected ? <p>Select a household report to record assistance.</p>
-          : selected.assistance ? <p role="status"><Check size={16} /> {selected.assistance} recorded for House {selected.home}.</p>
+          : selected.assistance ? <p role="status"><Check size={16} /> {reportStatus(selected, state)}.</p>
           : <>
-            <p>House {selected.home} · {canRecordPickup(state, area) ? `Simulated pickup at ${zone.basin} · ${pickupLiters} L` : 'Pickup requires area confirmation and an available reserve.'}</p>
-            <div><button className="button primary" type="button" disabled={!canRecordPickup(state, area)} onClick={() => onAssistance(selected.id, 'Non-drinking water')}>Record pickup</button>
+            <p>House {selected.home} · {pickupStatus}</p>
+            <div><button className="button primary" type="button" disabled={!pickupAllowed} onClick={() => onAssistance(selected.id, 'Non-drinking water')}>Record pickup</button>
               <button className="button secondary" type="button" onClick={() => onAssistance(selected.id, 'Drinking-water referral')}>Record drinking-water referral</button></div>
           </>}
       </div>

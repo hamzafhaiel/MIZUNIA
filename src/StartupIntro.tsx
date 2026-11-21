@@ -4,31 +4,9 @@ import type { CSSProperties } from 'react'
 import { demoCisterns, project } from './cisterns.ts'
 import './startup-intro.css'
 
-const seenKey = 'fas9ia-intro-seen-v2'
-const reducedMotion = '(prefers-reduced-motion: reduce)'
 const duration = 6020
 const impactTime = 1880
 const basins = demoCisterns()
-
-export function initialIntroMode(page: string): 'automatic' | 'replay' | null {
-  if (new URLSearchParams(window.location.search).get('intro') === '1') return 'replay'
-  if (page !== 'overview' && page !== 'map') return null
-  if (window.matchMedia(reducedMotion).matches) return null
-  try {
-    return sessionStorage.getItem(seenKey) ? null : 'automatic'
-  } catch {
-    return null
-  }
-}
-
-export function rememberIntro() {
-  try { sessionStorage.setItem(seenKey, '1') } catch { /* The workspace is still available. */ }
-  const url = new URL(window.location.href)
-  if (url.searchParams.get('intro') === '1') {
-    url.searchParams.delete('intro')
-    history.replaceState(history.state, '', url)
-  }
-}
 
 const particles = Array.from({ length: 56 }, (_, index) => ({
   angle: index * 2.399963,
@@ -62,7 +40,7 @@ function drawSplash(ctx: CanvasRenderingContext2D, width: number, height: number
   }
 }
 
-export function StartupIntro({ fullMotion, onFinish }: { fullMotion: boolean; onFinish: () => void }) {
+export function StartupIntro({ onFinish }: { onFinish: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const splash = useRef<HTMLCanvasElement>(null)
   const droplet = useRef<HTMLCanvasElement>(null)
@@ -73,23 +51,17 @@ export function StartupIntro({ fullMotion, onFinish }: { fullMotion: boolean; on
     element.showModal()
     const oldOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const media = window.matchMedia(reducedMotion)
-    const reduced = media.matches && !fullMotion
-    const timer = window.setTimeout(onFinish, reduced ? 1900 : duration)
+    const timer = window.setTimeout(onFinish, duration)
     const started = performance.now()
     const canvas = splash.current
-    const context = reduced ? null : canvas?.getContext('2d')
+    const context = canvas?.getContext('2d')
     let frame = 0
     let splashTimer = 0
     let dropFrame = 0
     let disposeDrop: (() => void) | undefined
     let cancelled = false
-    function endMotion(event: MediaQueryListEvent) {
-      if (event.matches) onFinish()
-    }
-    media.addEventListener('change', endMotion)
     const dropCanvas = droplet.current
-    if (!reduced && dropCanvas) {
+    if (dropCanvas) {
       void import('./intro-droplet.ts').then(({ createDroplet }) => {
         if (cancelled || performance.now() - started > 1100) return
         const renderer = createDroplet(dropCanvas)
@@ -132,13 +104,12 @@ export function StartupIntro({ fullMotion, onFinish }: { fullMotion: boolean; on
       cancelAnimationFrame(frame)
       cancelAnimationFrame(dropFrame)
       disposeDrop?.()
-      media.removeEventListener('change', endMotion)
       element.close()
       document.body.style.overflow = oldOverflow
     }
-  }, [fullMotion, onFinish])
+  }, [onFinish])
 
-  return <dialog ref={dialog} className="fas-intro" data-full-motion={fullMotion || undefined} aria-labelledby="fas-intro-title" onCancel={event => { event.preventDefault(); onFinish() }}>
+  return <dialog ref={dialog} className="fas-intro" data-full-motion aria-labelledby="fas-intro-title" onCancel={event => { event.preventDefault(); onFinish() }}>
     <div className="fas-intro-stage" aria-hidden="true">
       <div className="fas-intro-coast" />
       <div className="fas-intro-macro">

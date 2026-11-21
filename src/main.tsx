@@ -13,7 +13,7 @@ import { appendTimes, seedTimes } from './history.ts'
 import { motion } from './motion.ts'
 import { HouseholdIncidents, ReportWaterCut } from './HouseholdIncidents.tsx'
 import { CisternWorkspace } from './CisternMap.tsx'
-import { initialIntroMode, rememberIntro, StartupIntro } from './StartupIntro.tsx'
+import { StartupIntro } from './StartupIntro.tsx'
 import { canRecordPickup, homes, loadHouseholds, sampleHouseholds, saveHouseholds } from './households.ts'
 import type { AreaId, Assistance, HomeId, HouseholdReport, Issue } from './households.ts'
 import './style.css'
@@ -37,7 +37,7 @@ function readRoute() {
 
 function App() {
   const [route, setRoute] = useState(readRoute)
-  const [intro, setIntro] = useState(() => initialIntroMode(route.page))
+  const [showIntro, setShowIntro] = useState(true)
   const [state, setState] = useState(() => sampleState())
   const [households, setHouseholds] = useState(loadHouseholds)
   const [selectedBasin, setSelectedBasin] = useState<BasinId>('B-01')
@@ -50,8 +50,7 @@ function App() {
   const currentIncident = activeIncident(state)
 
   const finishIntro = useCallback(() => {
-    rememberIntro()
-    setIntro(null)
+    setShowIntro(false)
     requestAnimationFrame(() => {
       if (readRoute().page === 'map') window.scrollTo({ top: 0, behavior: 'instant' })
       document.getElementById('main-content')?.focus({ preventScroll: true })
@@ -149,7 +148,7 @@ function App() {
 
 
     <div className="main-shell">
-      <div className="command-header"><a href="#/map" className="command-brand" aria-label="Fas9ia home"><Brand /><span>FAS9IA</span></a><nav aria-label="Main navigation">{navigation.map(({ id, label, icon: Icon }) => <a key={id} href={'#/' + id} aria-current={route.page === id ? 'page' : undefined}><Icon size={15} /><span>{label}</span></a>)}</nav><Header state={state} onDemo={() => setDemo(true)} onIntro={() => setIntro('replay')} /></div>
+      <div className="command-header"><a href="#/map" className="command-brand" aria-label="Fas9ia home"><Brand /><span>FAS9IA</span></a><nav aria-label="Main navigation">{navigation.map(({ id, label, icon: Icon }) => <a key={id} href={'#/' + id} aria-current={route.page === id ? 'page' : undefined}><Icon size={15} /><span>{label}</span></a>)}</nav><Header state={state} onDemo={() => setDemo(true)} /></div>
       <main id="main-content" className="main-content" tabIndex={-1}>
         {parkModel && <div className="section-workspace">
           <a className="back-link" href="#/reserves"><ArrowLeft size={15} /> Shared reserves</a>
@@ -217,7 +216,7 @@ function App() {
       </form>
     </Dialog>}
     {!demo && <div className={message ? 'toast' : 'sr-only'} role="status">{message}</div>}
-    {intro && <StartupIntro onFinish={finishIntro} fullMotion={intro === 'replay'} />}
+    {showIntro && <StartupIntro onFinish={finishIntro} />}
   </div>
 }
 
