@@ -1,51 +1,110 @@
-# MIZUNIA · FAS9IA
+<a name="readme-top"></a>
 
-FAS9IA is an operator dashboard for a **simulated water-resilience pilot in Borj Râs, Mahdia, Tunisia**. It demonstrates how shared rainwater cisterns (فاسقيات) could support non-potable water needs during a supply interruption. Municipal operators can explore reserve availability, backup distribution, and incident response alongside the KIZUNA hydraulic simulation.
+<div align="center">
+  <h1>MIZUNIA · FAS9IA</h1>
+  <p>A municipal dashboard and hydraulic simulator for managing shared rainwater reserves during water cuts.</p>
+  <p>Borj Râs · Mahdia, Tunisia</p>
+  <p>
+    <a href="https://github.com/hamzafhaiel/MIZUNIA/commits/feat/fas9ia-dashboard/"><img src="https://img.shields.io/github/last-commit/hamzafhaiel/MIZUNIA/feat%2Ffas9ia-dashboard?style=flat-square&amp;label=Dashboard%20updated&amp;color=146B66" alt="Last dashboard commit"></a>
+    <a href="https://github.com/hamzafhaiel/MIZUNIA/stargazers"><img src="https://img.shields.io/github/stars/hamzafhaiel/MIZUNIA?style=flat-square&amp;color=146B66" alt="GitHub stars"></a>
+    <a href="https://github.com/hamzafhaiel/MIZUNIA/blob/feat/fas9ia-dashboard/package.json"><img src="https://img.shields.io/github/package-json/v/hamzafhaiel/MIZUNIA/feat%2Ffas9ia-dashboard?style=flat-square&amp;label=Dashboard%20version&amp;color=146B66" alt="Dashboard package version 0.1.0"></a>
+  </p>
+  <p>
+    <a href="#features">Features</a> ·
+    <a href="#architecture">Architecture</a> ·
+    <a href="#quickstart">Quickstart</a> ·
+    <a href="#configuration">Configuration</a> ·
+    <a href="#roadmap">Roadmap</a>
+  </p>
+  <img src="https://raw.githubusercontent.com/hamzafhaiel/MIZUNIA/8c75512ed5a77b9804ae2f8fdd5b00a64792dbde/public/intro-coast.webp" width="740" alt="Illustration of a coastal rainwater cistern and stone buildings in Mahdia">
+  <p><sub>Illustration from the FAS9IA intro</sub></p>
+</div>
 
-## Choose a branch
+## Overview and preview
 
-| Branch | Use it for |
-| --- | --- |
-| `main` | Project overview and setup guide. |
-| [`feat/fas9ia-dashboard`](https://github.com/hamzafhaiel/MIZUNIA/tree/feat/fas9ia-dashboard) | Integrated React dashboard, browser-based KIZUNA simulation, and optional ESP32 and Groq connections. [Dashboard guide](https://github.com/hamzafhaiel/MIZUNIA/blob/feat/fas9ia-dashboard/README.md) |
-| [`prototype1`](https://github.com/hamzafhaiel/MIZUNIA/tree/prototype1) | Standalone KIZUNA prototype with the ESP32 firmware, Wokwi circuit, MQTT client, and Three.js scene. [Prototype guide](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/README.md) |
+FAS9IA explores how a municipality could use shared cisterns (فاسقيات) as a local non-potable reserve during a supply interruption. The dashboard shows how much water is available and helps operators rehearse backup distribution, incident response, and maintenance using the KIZUNA simulator.
 
-Use `prototype1` when working on the standalone prototype. The similarly named `prototype` branch contains the initial README.
+<details>
+<summary><b>Preview the Borj Râs map</b></summary>
 
-## Implemented features
+<img src="https://raw.githubusercontent.com/hamzafhaiel/MIZUNIA/8c75512ed5a77b9804ae2f8fdd5b00a64792dbde/public/borj-ras-map.webp" width="680" alt="Borj Râs peninsula map used as the base layer of the cistern inventory">
 
-- **Opérations and Réserves.** Find cisterns on the Borj Râs map, register a cistern and sensor ID, submit a simulated reading, and review usable stock and autonomy estimates. Cisterns without a reading are excluded from measured storage.
-- **KIZUNA simulation.** Open the 3D scene from the dashboard and synchronize the browser simulation across tabs. Simulate rain, irrigation, a noon SONEDE outage, and non-potable backup distribution to three demonstration sectors.
-- **Vannes and Énergie.** Inspect simulated flows, adjust valves, and track solar output, pump load, generator fuel, and backup power. The proportional valves and generator controls are available in local simulation mode.
-- **Incidents and maintenance.** Review simulated leakage, sensor failures, and thermal alerts. Copy or download a leak report or open an email draft. Test annual cleaning (*tandifa*) and settling after a deposit.
-- **Optional assistance.** Groq can select a simulated operating profile or source basin and suggest reserve display hints. The simulation applies hydraulic calculations and operating limits locally. Rule-based behavior is available without Groq.
+Map data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+
+</details>
+
+[TODO: Add an up-to-date screenshot of the operator dashboard and a short KIZUNA demo recording.]
+
+[TODO: Add a verified public demo URL.]
+
+## Features
+
+<table>
+  <tr>
+    <th align="left">Operations and reserves</th>
+    <th align="left">KIZUNA simulation</th>
+  </tr>
+  <tr>
+    <td>Map and register cisterns, assign sensor IDs, enter simulated readings, and review usable stock and autonomy estimates.</td>
+    <td>Rehearse rainfall, irrigation, a noon SONEDE outage, and backup distribution to three demonstration sectors. The linked 3D scene synchronizes across browser tabs.</td>
+  </tr>
+  <tr>
+    <th align="left">Valves and energy</th>
+    <th align="left">Incidents and maintenance</th>
+  </tr>
+  <tr>
+    <td>In local simulation, adjust valve openings and track flow, solar output, pump demand, generator fuel, and backup power.</td>
+    <td>Review simulated leaks, sensor faults, and thermal alerts. Download leak reports, prepare email drafts, and rehearse annual cleaning (tandifa) and settling after a deposit.</td>
+  </tr>
+</table>
 
 ## Architecture
 
 ```mermaid
-flowchart LR
+flowchart TD
     UI["FAS9IA dashboard"]
-    LOCAL["Browser simulation"]
-    SCENE["KIZUNA Three.js scene"]
+    LOCAL["Local hydraulic model"]
+    VIEW["Linked KIZUNA 3D tab"]
     ESP["ESP32 in Wokwi"]
-    MQTT["MQTT broker"]
+    BROKER["MQTT broker"]
+    STANDALONE["Standalone KIZUNA"]
     VITE["Local Vite middleware"]
     GROQ["Groq"]
 
     UI <--> LOCAL
-    UI <-->|"Same-origin BroadcastChannel"| SCENE
-    ESP <-->|"MQTT over TCP"| MQTT
-    MQTT <-->|"MQTT over WebSocket, optional"| UI
-    MQTT <-->|"MQTT over WebSocket"| STANDALONE["Standalone KIZUNA"]
-    UI -->|"HTTP, optional"| VITE
+    UI <-->|"Same-origin tab sync"| VIEW
+    ESP <-->|"MQTT TCP"| BROKER
+    BROKER <-->|"MQTT WebSocket"| UI
+    BROKER <-->|"MQTT WebSocket"| STANDALONE
+    UI -->|"Optional HTTP request"| VITE
     VITE --> GROQ
 ```
 
-In **KIZUNA · Simulation locale**, the dashboard and its linked KIZUNA scene share simulated state and commands. In **KIZUNA · ESP32 Wokwi**, the dashboard can exchange telemetry and supported commands with the simulated firmware. The client requires a fresh reading before sending a command and waits for the matching acknowledgement. See the versioned [MQTT contract](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/MQTT.md) for topics and payloads.
+1. **Local simulation.** The browser runs the hydraulic model. The dashboard and its linked Three.js tab exchange state and supported actions over `BroadcastChannel`.
+2. **Wokwi mode.** The ESP32 simulator exchanges telemetry and commands through MQTT. The dashboard requires a fresh reading before sending a command and waits for its matching acknowledgement. [MQTT message contract](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/MQTT.md)
+3. **Optional Groq assistance.** Loopback Vite middleware requests a simulated operating profile, backup basin, or reserve display hints. The browser applies hydraulic calculations and protection rules and has a local fallback.
 
-The dashboard lockfile pins React **19.3.1**, TypeScript **5.9.3**, Vite **7.3.8**, Three.js **0.187.0**, React Three Fiber **9.8.2**, and MQTT.js **5.16.1**. The standalone prototype uses JavaScript, Vite **8.3.8**, Three.js **0.187.0**, and MQTT.js **5.16.1**. The firmware builds for PlatformIO's `esp32dev` board with Arduino and Espressif32 **6.12.0**.
+## Tech stack
 
-## Run the dashboard
+| Layer | Versions and tools |
+| --- | --- |
+| Dashboard | React **19.3.1**, TypeScript **5.9.3**, Vite **7.3.8** |
+| 3D views | Three.js **0.187.0**, React Three Fiber **9.8.2** for Parc Hydraulique |
+| Standalone KIZUNA | JavaScript, Vite **8.3.8**, Three.js **0.187.0** |
+| Telemetry | MQTT.js **5.16.1**, MQTT 3.1.1 |
+| Firmware | C++ and Arduino on PlatformIO `esp32dev`, Espressif32 **6.12.0**, Wokwi |
+
+Web versions above come from the committed lockfiles.
+
+## Quickstart
+
+| Branch | Contents |
+| --- | --- |
+| `main` | This overview |
+| [`feat/fas9ia-dashboard`](https://github.com/hamzafhaiel/MIZUNIA/tree/feat/fas9ia-dashboard) | Dashboard, linked KIZUNA scene, and bundled Wokwi prototype |
+| [`prototype1`](https://github.com/hamzafhaiel/MIZUNIA/tree/prototype1) | Standalone simulator, MQTT contract, firmware, and circuit |
+
+The similarly named `prototype` branch contains the initial README. Use `prototype1` for the standalone implementation.
 
 Use **Git, Node.js 22.12 or newer, npm, and a WebGL-capable browser**.
 
@@ -56,11 +115,15 @@ npm ci
 npm run dev
 ```
 
-1. Open the URL printed by Vite. Use **Skip intro** or **Esc** to reach the demo sign-in.
-2. Sign in with the public demo account `demo@fas9ia.test` and password `Fas9ia-Demo2026!`. This is a browser-side demo sign-in.
-3. Open **Simulation**, select **KIZUNA · Simulation locale**, and click **Ouvrir la simulation 3D**. Keep both tabs open. Try rainfall or **Simuler la coupure de 12 h** to see the backup distribution scenario.
+1. Open the URL printed by Vite. Press <kbd>Esc</kbd> to skip the intro.
+2. Sign in with the public demo account `demo@fas9ia.test` and password `Fas9ia-Demo2026!`. The app validates this account in the browser.
+3. Select **Simulation → KIZUNA · Simulation locale → Ouvrir la simulation 3D**. Keep both tabs open and try **Simuler la coupure de 12 h**.
 
-## Run the standalone prototype
+> [!TIP]
+> Start with **Simulation locale**. This mode runs from a single Vite server and requires no broker setup, firmware build, or Groq key.
+
+<details>
+<summary><b>Run standalone KIZUNA or connect Wokwi</b></summary>
 
 ```sh
 git clone --branch prototype1 https://github.com/hamzafhaiel/MIZUNIA.git mizunia-prototype
@@ -69,67 +132,102 @@ npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite and enable **Aperçu 3D avec niveaux fictifs** for a browser-only demo. To use the simulated ESP32, open the project in VS Code with the PlatformIO IDE and Wokwi Simulator extensions. Run `pio run` in a PlatformIO terminal and choose **Wokwi: Start Simulator**. The dashboard branch also includes a firmware copy in `kizuna-prototype/`. [Wokwi setup in the prototype guide](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/README.md)
+Enable **Aperçu 3D avec niveaux fictifs** to run the browser preview. For ESP32 telemetry, open the prototype in VS Code with PlatformIO IDE and Wokwi Simulator. Run `pio run` from the prototype folder, then choose **Wokwi: Start Simulator**. Configure the dashboard MQTT variables below and select **KIZUNA · ESP32 Wokwi**. The dashboard checkout also bundles the prototype under `kizuna-prototype/`. [Standalone setup guide](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/README.md)
+
+</details>
 
 ## Configuration
 
-Add optional settings to `.env.local` beside the relevant app's `package.json`. Restart Vite after changes. Keep the Groq key server-side and use fictional telemetry on the public MQTT demo broker.
+Put the settings in `.env.local` beside the applicable `package.json`, then restart Vite. Rebuild a static bundle after changing its `VITE_` settings.
 
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
-| `VITE_KIZUNA_MQTT_URL` | For dashboard Wokwi mode | Unset | MQTT broker WebSocket URL. The supplied firmware defaults to the broker reachable at `wss://test.mosquitto.org:8081/mqtt` from the browser. |
-| `VITE_KIZUNA_MQTT_PREFIX` | For dashboard Wokwi mode | Unset | Topic prefix matching `TopicPrefix` in the firmware configuration. |
-| `GROQ_API_KEY` | For Groq assistance | Unset | Server-side key loaded by the dashboard's Vite middleware. |
-| `GROQ_MODEL` | No | `openai/gpt-oss-20b` | Model used when Groq assistance is enabled. |
-| `VITE_MQTT_URL` | No, standalone prototype | `wss://test.mosquitto.org:8081/mqtt` | Broker WebSocket URL. |
-| `VITE_MQTT_PREFIX` | No, standalone prototype | `kizuna/mahdia/demo-7c42e9/bassin-1` | Default demo topic prefix. Use a distinct prefix for your team and match it in the firmware and clients. |
+| `VITE_KIZUNA_MQTT_URL` | Dashboard Wokwi mode | Unset | Browser WebSocket endpoint for the firmware's broker |
+| `VITE_KIZUNA_MQTT_PREFIX` | Dashboard Wokwi mode | Unset | Prefix matching the firmware's `TopicPrefix` |
+| `GROQ_API_KEY` | Groq assistance | Unset | Server-side key used by the dashboard's Vite middleware |
+| `GROQ_MODEL` | No | `openai/gpt-oss-20b` | Model used for Groq requests |
+| `VITE_MQTT_URL` | No | `wss://test.mosquitto.org:8081/mqtt` | Standalone KIZUNA broker endpoint |
+| `VITE_MQTT_PREFIX` | No | `kizuna/mahdia/demo-7c42e9/bassin-1` | Standalone KIZUNA topic prefix |
 
-The ESP32 uses `BrokerHost`, `BrokerPort`, and `TopicPrefix` in `firmware/config.h`. Rebuild the firmware after changing them. Groq assistance is available on the dashboard's loopback Vite dev and preview servers. Static hosting of `dist/` serves the frontend and simulation.
+> [!WARNING]
+> Use fictional telemetry and a team-specific prefix on the public broker. Put `GROQ_API_KEY` in the server-side `.env.local` and keep it out of browser variables and commits.
 
-## Development and testing
+<details>
+<summary><b>Optional .env.local templates</b></summary>
 
-| Task | Dashboard branch | Standalone prototype |
-| --- | --- | --- |
-| Local development | `npm run dev` | `npm run dev` |
-| Unit tests | `npm test` | — |
-| Build web app | `npm run build` | `npm run build` |
-| Preview web build | `npm run preview` | `npm run preview` |
-| Build Wokwi firmware | `pio run` from `kizuna-prototype/` | `pio run` from the branch root |
+**Dashboard**, beside the root `package.json` of `feat/fas9ia-dashboard`:
 
-The dashboard build checks TypeScript before bundling. The dashboard tests cover cistern readings, histories, park incidents, valves, and KIZUNA behavior.
-
-## Project structure
-
-```text
-feat/fas9ia-dashboard/
-├── src/
-│   ├── main.tsx             Dashboard routes and app state
-│   ├── kizuna-pilot.ts      Backup distribution and operating constraints
-│   ├── kizuna-connection.ts  MQTT telemetry and command acknowledgements
-│   ├── kizuna/              Dashboard-to-scene bridge
-│   └── twin/                Parc Hydraulique model and telemetry
-├── kizuna/index.html        Dashboard-linked KIZUNA scene entry point
-├── kizuna-prototype/        Shared 3D scene, Wokwi circuit, and firmware
-├── public/                  Map and visual assets
-└── vite.config.mjs          Web entry points and local Groq middleware
-
-prototype1/
-├── src/                     Standalone 3D simulation and MQTT client
-├── firmware/                ESP32 firmware and broker defaults
-├── diagram.json             Wokwi circuit
-├── platformio.ini           Firmware build configuration
-├── wokwi.toml               Wokwi firmware paths
-└── MQTT.md                  Telemetry and command format
+```dotenv
+VITE_KIZUNA_MQTT_URL=wss://test.mosquitto.org:8081/mqtt
+VITE_KIZUNA_MQTT_PREFIX=kizuna/mahdia/demo-7c42e9/bassin-1
+# GROQ_API_KEY=
+# GROQ_MODEL=openai/gpt-oss-20b
 ```
 
-## Pilot scope
+The prefix above is the repository's example. Set a matching team-specific `TopicPrefix`, `BrokerHost`, and `BrokerPort` in `firmware/config.h` on `prototype1` or in `kizuna-prototype/firmware/config.h` on the dashboard branch, then rebuild the firmware. The supplied firmware uses TCP port `1883` and the browser example uses secure WebSocket port `8081`.
 
-The map uses [OpenStreetMap data](https://www.openstreetmap.org/copyright). The monitored cistern placements, supply interruptions, and pump operations are demonstration scenarios. The dashboard stores its cistern registry, incident journal, and maintenance calendar in the browser. A field pilot would require a site inventory, an operating partner, and water-quality validation for the intended non-potable uses.
+For standalone KIZUNA, start with [`.env.example`](https://github.com/hamzafhaiel/MIZUNIA/blob/prototype1/.env.example). Groq assistance runs on the dashboard's loopback Vite development and preview servers. A static `dist/` deployment provides the frontend simulation.
 
-[TODO: Add the deployed demo URL once it has been verified.]
+</details>
+
+## Development
+
+| Task | Dashboard | Standalone KIZUNA |
+| --- | --- | --- |
+| Run | `npm run dev` | `npm run dev` |
+| Test | `npm test` | — |
+| Build | `npm run build` | `npm run build` |
+| Preview | `npm run preview` | `npm run preview` |
+| Compile firmware | `pio run` in `kizuna-prototype/` | `pio run` at the branch root |
+
+The dashboard build runs TypeScript checks before Vite bundles the web entry points.
+
+<details>
+<summary><b>Project structure</b></summary>
+
+**Dashboard branch**
+
+```text
+src/
+├── main.tsx               App state, routes, and simulation screens
+├── kizuna-pilot.ts        Supply interruption and backup distribution model
+├── kizuna-connection.ts   MQTT telemetry and acknowledgements
+├── useKizunaPage.ts       Same-origin bridge to the KIZUNA tab
+└── twin/                  Parc Hydraulique model and telemetry
+kizuna/index.html          Linked KIZUNA browser entry point
+kizuna-prototype/          Shared scene, Wokwi circuit, and firmware
+public/                   Map and app artwork
+vite.config.mjs            Web entry points and optional Groq middleware
+```
+
+**Standalone prototype branch**
+
+```text
+src/                      Standalone Three.js and MQTT client
+firmware/                 ESP32 firmware and broker settings
+diagram.json              Wokwi circuit
+platformio.ini            ESP32 build configuration
+wokwi.toml                Simulator and firmware paths
+MQTT.md                   Message contract
+```
+
+</details>
+
+## Roadmap
+
+- [x] Demonstrate a three-sector backup water scenario in the integrated browser simulation.
+- [x] Support optional MQTT exchange with the Wokwi ESP32.
+- [ ] Survey candidate cisterns and validate reuse with a municipal operating partner.
+- [ ] Verify water quality for the proposed non-potable uses and measure field water delivery and energy use.
+
+The cistern registry, incident journal, and maintenance calendar are stored in the browser. SONEDE interruptions and water distribution are simulation scenarios.
 
 ## Contributing and license
 
-For dashboard changes, branch from `feat/fas9ia-dashboard` and run `npm test` and `npm run build` before opening a pull request. For standalone prototype changes, branch from `prototype1` and run `npm run build`. Run `pio run` for firmware changes and document any modified MQTT topics or payloads.
+Branch from the implementation you intend to change. For dashboard changes, run `npm test` and `npm run build`. For standalone web changes, run `npm run build`. For firmware changes, run `pio run` and document changes to MQTT messages.
 
 [TODO: Confirm the source-code license and add a LICENSE file.]
+
+<div align="center">
+  <p><a href="https://github.com/hamzafhaiel/MIZUNIA/graphs/contributors">Contributors</a> · <a href="#contributing-and-license">License status</a> · <a href="#readme-top">↑ Back to top</a></p>
+</div>
