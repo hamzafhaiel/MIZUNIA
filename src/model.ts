@@ -70,7 +70,7 @@ export function availableReserve(state: DashboardState): number | null {
 export function activeIncident(state: DashboardState) {
   return state.incidents.find(incident => incident.status !== 'Resolved')
 }
-export function supplyStatus(state: DashboardState) {
+export function supplyStatus(state: DashboardState): 'Unknown' | 'Low pressure' | 'Normal' {
   if (!state.sensors.some(sensor => sensor.online)) return 'Unknown'
   if (state.sensors.some(sensor => sensor.online && sensor.pressure < lowPressure)) return 'Low pressure'
   return 'Normal'

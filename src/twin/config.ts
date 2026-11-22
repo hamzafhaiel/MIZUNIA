@@ -4,6 +4,7 @@ export type Vec3 = [number, number, number]
 type Point = [number, number]
 export type BasinId = 'B-01' | 'B-02'
 export type Mode = 'neighborhood' | 'inspection' | 'cutaway'
+export type Weather = 'sunny' | 'cloudy' | 'rain'
 
 export const colors = {
   sky: '#112c37', horizon: '#214751', sea: '#235257', deepSea: '#102e3a',

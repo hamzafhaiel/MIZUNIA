@@ -3,7 +3,7 @@ import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, use
 import type { CSSProperties, ReactNode } from 'react'
 import type { DashboardState } from '../model.ts'
 import { basinIds, siteBasins } from './config.ts'
-import type { BasinId, Mode } from './config.ts'
+import type { BasinId, Mode, Weather } from './config.ts'
 import { deriveTwinState, getBasinReading } from './state.ts'
 
 const TwinCanvas = lazy(() => import('./TwinCanvas.tsx'))
@@ -27,12 +27,16 @@ interface TwinViewProps {
   selected: BasinId
   annexVolume: number
   mode: Mode
-  raining: boolean
+  weather: Weather
+  previewIrrigation?: boolean
+  irrigationLabel?: string
+  isolateIrrigation?: boolean
+  showModeControls?: boolean
   onMode: (mode: Mode) => void
   onPick: (id: BasinId) => void
 }
 
-export function TwinView({ state, selected, annexVolume, mode, raining, onMode, onPick }: TwinViewProps) {
+export function TwinView({ state, selected, annexVolume, mode, weather, previewIrrigation = false, irrigationLabel = 'Irrigation test · simulated', isolateIrrigation = false, showModeControls = true, onMode, onPick }: TwinViewProps) {
   const mount = useRef<HTMLDivElement>(null)
   const viewport = useRef<HTMLElement>(null)
   const expandControl = useRef<HTMLButtonElement>(null)
@@ -128,7 +132,8 @@ export function TwinView({ state, selected, annexVolume, mode, raining, onMode, 
     'B-01': getBasinReading(state, 'B-01', annexVolume),
     'B-02': getBasinReading(state, 'B-02', annexVolume),
   }), [state, annexVolume])
-  const visualState = deriveTwinState(state)
+  const model = deriveTwinState(state)
+  const visualState = isolateIrrigation ? { ...model, route: false } : model
   const lost = useCallback(() => setContextLost(true), [])
   const useScene = (scenePreference ?? !lightweight) && !contextLost
   const overlayState = visualState.outage ? 'Zone A · Low pressure' : visualState.unknown ? 'Supply unknown' : 'Supply normal'
@@ -138,16 +143,16 @@ export function TwinView({ state, selected, annexVolume, mode, raining, onMode, 
   <section ref={viewport} className={'panel twin-panel' + (expanded ? ' twin-expanded' : '')} role={expanded ? 'dialog' : undefined} aria-modal={expanded ? true : undefined} aria-label="Interactive digital twin">
     <div className="twin-heading">
       <label className="asset-select"><span>Asset</span><select value={selected} onChange={event => onPick(event.target.value as BasinId)}>{basinIds.map(id => <option key={id} value={id}>{siteBasins[id].name}</option>)}</select></label>
-      <div className="twin-modes" aria-label="Twin camera mode">
-        {modes.map(({ id, icon: Icon, label }, index) => <button key={id} title={label + ' (' + (index + 1) + ')'} aria-keyshortcuts={String(index + 1)} aria-pressed={mode === id} onClick={() => onMode(id)}><Icon size={15} />{label}</button>)}
+      <div className={showModeControls ? 'twin-modes' : 'twin-expand-only'} aria-label="Twin camera controls">
+        {showModeControls && modes.map(({ id, icon: Icon, label }, index) => <button key={id} title={label + ' (' + (index + 1) + ')'} aria-keyshortcuts={String(index + 1)} aria-pressed={mode === id} onClick={() => onMode(id)}><Icon size={15} />{label}</button>)}
         <button ref={expandControl} type="button" className="expand-twin" aria-label={expanded ? 'Close expanded inspection' : 'Expand 3D inspection'} aria-keyshortcuts={expanded ? 'Escape F' : 'F'} aria-pressed={expanded} title={expanded ? 'Exit inspection (Esc)' : 'Expand inspection (F)'} onClick={toggleExpanded}>{expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}</button>
       </div>
     </div>
-    <div className={'twin-stage' + (hovered && useScene ? ' has-hover' : '')} ref={mount}>
+    <div className={'twin-stage' + (hovered && useScene ? ' has-hover' : '')} data-weather={weather} ref={mount}>
       {useScene ? <TwinBoundary fallback={schematic} onError={lost}>
         <Suspense fallback={<div className="twin-message" role="status">Loading the 3D site…</div>}>
           <TwinCanvas mode={mode} selected={selected} hovered={hovered} reset={reset} reduced={reduced} visible={inView && visibleDocument} readings={readings}
-            state={visualState} raining={raining} frameRef={debug ? frameRef : undefined} labelRefs={labelRefs}
+            state={visualState} weather={weather} previewIrrigation={previewIrrigation} frameRef={debug ? frameRef : undefined} labelRefs={labelRefs}
             onPick={onPick} onHover={setHovered} onContextLost={lost} />
         </Suspense>
       </TwinBoundary> : schematic}
@@ -171,8 +176,8 @@ export function TwinView({ state, selected, annexVolume, mode, raining, onMode, 
           <button type="button" className="scene-icon" title="Reset camera" aria-label="Reset camera" onClick={() => setReset(value => value + 1)} disabled={!useScene}><LocateFixed size={17} /></button>
         </div>
       </div>
-      {visualState.route && <span className="scene-route-tag"><i /> Approved route · simulated</span>}
-      {raining && <span className="scene-rain-tag"><CloudRain size={14} /> Rainfall simulation</span>}
+      {(visualState.route || previewIrrigation) && <span className="scene-route-tag"><i /> {previewIrrigation ? irrigationLabel : 'Approved route · simulated'}</span>}
+      {weather === 'rain' && <span className="scene-rain-tag"><CloudRain size={14} /> Rainfall simulation</span>}
       <div className="twin-bottom-overlay">
         <span className="scene-help">{useScene ? 'Drag to orbit · Scroll to zoom' : contextLost ? '3D unavailable' : 'Schematic view'}</span>
       </div>

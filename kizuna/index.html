@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Simulation 3D KIZUNA</title>
+  </head>
+  <body>
+    <header class="scene-header">
+      <h1>Simulation 3D KIZUNA</h1>
+      <div class="scene-links">
+        <span id="scene-status" role="status">Chargement de la maquette…</span>
+        <a id="scene-local" href="./index.html?mode=local" hidden>Ouvrir en mode local autonome</a>
+        <a href="../#/simulation">Tableau de bord Mizuna</a>
+      </div>
+    </header>
+    <main class="scene-stage" aria-label="Maquette des trois bassins, jardins et habitations KIZUNA">
+      <div id="app"></div>
+      <p id="scene-waiting" hidden>En attente des niveaux des bassins.</p>
+      <p id="scene-fallback" role="status" hidden>La vue 3D nécessite WebGL. Retrouvez les mesures et les commandes dans Mizuna.</p>
+    </main>
+    <aside class="scene-tools" aria-label="Commandes de la maquette">
+      <div class="scene-basins" role="group" aria-label="Bassin affiché">
+        <button type="button" data-basin="1" aria-pressed="true">Bassin 1 <span>—</span></button>
+        <button type="button" data-basin="2" aria-pressed="false">Bassin 2 <span>—</span></button>
+        <button type="button" data-basin="3" aria-pressed="false">Bassin 3 <span>—</span></button>
+        <button type="button" id="scene-pump" disabled>Démarrer la pompe</button>
+      </div>
+      <div class="scene-generator" id="scene-generator" hidden>
+        <strong>Groupe électrogène</strong>
+        <span id="scene-generator-status"></span>
+        <button type="button" id="scene-generator-toggle" disabled>Démarrer le groupe électrogène</button>
+      </div>
+      <details>
+        <summary>Vues détaillées de la maquette</summary>
+        <div class="scene-controls">
+          <button type="button" id="show-inlet" aria-pressed="false">Zoom sur l’entrée d’eau</button>
+          <button type="button" id="show-pressure" aria-pressed="false">Zoom sur la conduite</button>
+          <button type="button" id="show-garden" aria-pressed="false">Zoom sur l’arrosage</button>
+          <button type="button" id="show-lifters">Animer les puiseurs</button>
+          <label>Capteur
+            <select id="sensor-choice">
+              <option value="level">Niveau</option>
+              <option value="temperature">Température</option>
+              <option value="turbidity">Turbidité</option>
+              <option value="soil">Humidité du sol</option>
+              <option value="weather">Météo simulée</option>
+            </select>
+          </label>
+          <button type="button" id="show-sensor" aria-pressed="false">Zoom sur le capteur</button>
+          <output id="sensor-focus-reading">Mesure indisponible</output>
+        </div>
+      </details>
+    </aside>
+    <script type="module" src="/src/kizuna/bootstrap.js"></script>
+  </body>
+</html>

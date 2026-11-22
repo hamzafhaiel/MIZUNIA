@@ -119,7 +119,7 @@ const buriedIrrigation = curve(paths.irrigation)
 const displayIrrigation = curve(paths.irrigation.map(([x, , z]) => [x, .2, z]))
 const runoff = curve([...paths.catchment.map(([x, z]) => [x, .18, z] as Vec3), [-4.55, -.75, 1.08]])
 
-export function Pipes({ cutaway, authorized, frozen }: { cutaway: boolean; authorized: boolean; frozen: boolean }) {
+export function Pipes({ cutaway, authorized, preview, frozen }: { cutaway: boolean; authorized: boolean; preview: boolean; frozen: boolean }) {
   const group = useRef<Group>(null)
   const flowTime = useRef(0)
   const temp = useMemo(() => new Vector3(), [])
@@ -137,7 +137,7 @@ export function Pipes({ cutaway, authorized, frozen }: { cutaway: boolean; autho
       <tubeGeometry args={[line, 32, .18, 8, false]} />
       <meshStandardMaterial color={colors.pipe} metalness={.47} opacity={.9} transparent depthWrite={false} />
     </mesh>)}
-    {authorized && <>
+    {(authorized || preview) && <>
       <mesh renderOrder={3}><tubeGeometry args={[visibleRoute, 32, .13, 8, false]} /><meshBasicMaterial color="#32d8c3" transparent opacity={.7} depthWrite={false} depthTest={!cutaway} /></mesh>
       <group ref={group}>{Array.from({ length: particles.routeCount }, (_, index) => <mesh key={index} renderOrder={4}>
         <sphereGeometry args={[.16, 8, 6]} /><meshBasicMaterial color="#b8ffec" depthTest={!cutaway} />

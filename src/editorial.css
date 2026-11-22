@@ -207,7 +207,6 @@ summary::-webkit-details-marker { display: none; }
 
 /* Cistern workspace. The stone section is the first operational view. */
 .is-section .main-shell { background: #eeeae0; }
-.section-workspace { color: #202f2e; --ink: #202f2e; --muted: #505f5a; --line: #bfc5b9; --teal: #215e55; --water: #247d6b; --warning: #9b4f26; --white: #f7f4ec; }
 .section-workspace .overview-title { margin-bottom: 14px; }
 .section-workspace .eyebrow { color: #536451; letter-spacing: .14em; }
 .section-workspace .page-title h1 { font-size: clamp(35px, 4.2vw, 64px); }

@@ -7,6 +7,7 @@ import { motion } from '../motion.ts'
 import type { DirectionalLight, OrthographicCamera } from 'three'
 import { BuildingsAndGarden, GroundOcclusion, Terrain } from './architecture.tsx'
 import { basinIds, camera as cameraConfig, colors, light, siteBasins, terrain } from './config.ts'
+import type { Weather } from './config.ts'
 import type { BasinId, Mode, Vec3 } from './config.ts'
 import { Basin, OutageLayer, Pipes, Rain } from './infrastructure.tsx'
 import { Sea, useMasonry } from './materials.tsx'
@@ -124,7 +125,8 @@ interface SceneProps {
   visible: boolean
   readings: Record<BasinId, ReturnType<typeof getBasinReading>>
   state: ReturnType<typeof deriveTwinState>
-  raining: boolean
+  weather: Weather
+  previewIrrigation: boolean
   frameRef?: RefObject<HTMLSpanElement | null>
   labelRefs: RefObject<Partial<Record<BasinId | 'zone' | 'level', HTMLElement>>>
   onPick: (id: BasinId) => void
@@ -163,21 +165,28 @@ function ProjectLabels({ labels, mode, selected, readings, reduced }: Pick<Scene
   return null
 }
 
-function World({ mode, selected, hovered, reset, reduced, readings, state, raining, onPick, onHover }: SceneProps) {
+const atmosphere = {
+  sunny: { sky: colors.sky, horizon: colors.horizon, sun: light.sunIntensity },
+  cloudy: { sky: '#465761', horizon: '#62747e', sun: .85 },
+  rain: { sky: '#293a49', horizon: '#485b6a', sun: .55 },
+}
+
+function World({ mode, selected, hovered, reset, reduced, readings, state, weather, previewIrrigation, onPick, onHover }: SceneProps) {
   const masonry = useMasonry()
   const cutaway = mode === 'cutaway'
   const cutBasin = cutaway ? selected : undefined
   const sun = useRef<DirectionalLight>(null)
+  const lighting = atmosphere[weather]
   useLayoutEffect(() => {
     if (!sun.current) return
     sun.current.shadow.autoUpdate = false
     sun.current.shadow.needsUpdate = true
   }, [cutBasin])
   return <>
-    <color attach="background" args={[colors.sky]} />
-    <fog attach="fog" args={[colors.horizon, 72, 156]} />
+    <color attach="background" args={[lighting.sky]} />
+    <fog attach="fog" args={[lighting.horizon, 72, 156]} />
     <hemisphereLight args={[light.sky, light.ground, light.ambientIntensity]} />
-    <directionalLight ref={sun} color={light.sun} intensity={light.sunIntensity} position={light.position} castShadow
+    <directionalLight ref={sun} color={light.sun} intensity={lighting.sun} position={light.position} castShadow
       shadow-mapSize-width={light.shadowSize} shadow-mapSize-height={light.shadowSize}
       shadow-camera-left={-light.shadowRadius} shadow-camera-right={light.shadowRadius}
       shadow-camera-top={light.shadowRadius} shadow-camera-bottom={-light.shadowRadius}
@@ -190,8 +199,8 @@ function World({ mode, selected, hovered, reset, reduced, readings, state, raini
     {basinIds.map(id => <Basin key={id} id={id} reading={readings[id]} selected={selected === id} hovered={hovered === id}
       cutaway={cutaway && selected === id} frozen={reduced} texture={masonry} onPick={onPick} onHover={onHover} />)}
     {state.outage && <OutageLayer frozen={reduced} />}
-    <Pipes cutaway={cutaway} authorized={state.route} frozen={reduced} />
-    {raining && <Rain frozen={reduced} />}
+    <Pipes cutaway={cutaway} authorized={state.route} preview={previewIrrigation} frozen={reduced} />
+    {weather === 'rain' && <Rain frozen={reduced} />}
     <CameraRig mode={mode} selected={selected} reset={reset} reduced={reduced} />
   </>
 }

@@ -3,6 +3,7 @@ export type Cistern = Location & {
   id: string
   name: string
   capacity: number
+  diameter?: number
   sensorId: string
   reading: { liters: number; at: number } | null
 }
@@ -47,13 +48,14 @@ export function isPilotLocation({ latitude, longitude }: Location) {
 
 export function demoCisterns(now = Date.now()): Cistern[] {
   return [
-    { id: 'FQ-001', name: 'Msatha', latitude: 35.50468, longitude: 11.07160, capacity: 3000, sensorId: 'WOKWI-01', reading: { liters: 1800, at: now - 120000 } },
-    { id: 'FQ-002', name: 'Bassin 2', latitude: 35.50646, longitude: 11.07525, capacity: 2400, sensorId: 'WOKWI-02', reading: { liters: 460, at: now - 180000 } },
-    { id: 'FQ-003', name: 'Bassin 3', latitude: 35.50742, longitude: 11.07835, capacity: 2600, sensorId: 'WOKWI-03', reading: null },
+    { id: 'FQ-001', name: 'Msatha', latitude: 35.50468, longitude: 11.07160, capacity: 3000, diameter: 1.6, sensorId: 'WOKWI-01', reading: { liters: 1800, at: now - 120000 } },
+    { id: 'FQ-002', name: 'Bassin 2', latitude: 35.50646, longitude: 11.07525, capacity: 2400, diameter: 1.5, sensorId: 'WOKWI-02', reading: { liters: 460, at: now - 180000 } },
+    { id: 'FQ-003', name: 'Bassin 3', latitude: 35.50742, longitude: 11.07835, capacity: 2600, diameter: 1.55, sensorId: 'WOKWI-03', reading: null },
   ]
 }
 
-type Registration = Location & { name: string; capacity: number; sensorId: string }
+type Registration = Location & { name: string; capacity: number; diameter?: number; sensorId: string }
+const validDiameter = (diameter: number | undefined) => diameter === undefined || Number.isFinite(diameter) && diameter >= .01
 
 export function registerCistern(registry: Cistern[], draft: Registration): { cistern: Cistern } | { error: string } {
   const name = draft.name.trim()
@@ -61,10 +63,16 @@ export function registerCistern(registry: Cistern[], draft: Registration): { cis
   if (!name || name.length > 60) return { error: 'Saisissez un nom de 1 à 60 caractères.' }
   if (!isPilotLocation(draft)) return { error: 'Choisissez un emplacement à terre dans la zone de la carte.' }
   if (!Number.isInteger(draft.capacity) || draft.capacity < 1 || draft.capacity > 1000000) return { error: 'Indiquez une capacité de 1 à 1 000 000 L.' }
+  if (!validDiameter(draft.diameter)) return { error: 'Indiquez un diamètre d’au moins 0,01 m.' }
   if (!/^[A-Z0-9][A-Z0-9_-]{2,31}$/.test(sensorId)) return { error: 'Utilisez entre 3 et 32 caractères pour le capteur. Lettres, chiffres, tirets et traits de soulignement sont acceptés.' }
   if (registry.some(cistern => cistern.sensorId === sensorId)) return { error: 'Ce capteur est déjà associé à une citerne.' }
   const next = Math.max(0, ...registry.map(cistern => Number(cistern.id.slice(3)))) + 1
   return { cistern: { ...draft, name, sensorId, id: 'FQ-' + String(next).padStart(3, '0'), reading: null } }
+}
+
+export function updateCisternDiameter(registry: Cistern[], id: string, diameter?: number) {
+  if (!validDiameter(diameter)) return registry
+  return registry.map(cistern => cistern.id === id ? { ...cistern, diameter } : cistern)
 }
 
 export function applySensorReading(registry: Cistern[], sensorId: string, liters: number, at = Date.now()): Cistern[] {
@@ -86,7 +94,7 @@ export function readCisterns(): Cistern[] | null {
       Number.isInteger(cistern.capacity) && cistern.capacity > 0 &&
       (cistern.reading === null || (cistern.reading && Number.isFinite(cistern.reading.at) &&
         Number.isFinite(cistern.reading.liters) && cistern.reading.liters >= 0 && cistern.reading.liters <= cistern.capacity)))) return null
-    return value
+    return value.map(cistern => validDiameter(cistern.diameter) ? cistern : { ...cistern, diameter: undefined })
   } catch {
     return null
   }

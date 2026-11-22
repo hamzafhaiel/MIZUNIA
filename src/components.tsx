@@ -1,4 +1,4 @@
-import { Activity as Pulse, ChevronDown, CircleAlert, ClipboardList, Clock3, Droplet, Gauge, LayoutDashboard, Radio, SlidersHorizontal, TriangleAlert, Waves, Wifi, X } from 'lucide-react'
+import { Activity as Pulse, ChevronDown, CircleAlert, ClipboardList, Clock3, Droplet, Gauge, LayoutDashboard, MapPin, Moon, Radio, Route, SlidersHorizontal, Sun, TriangleAlert, Waves, Wifi, X, Zap } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { lowPressure, lowReserve, supplyStatus } from './model.ts'
@@ -18,12 +18,28 @@ export const navigation = [
   { id: 'map', label: 'Opérations', icon: LayoutDashboard },
   { id: 'incidents', label: 'Incidents', icon: TriangleAlert },
   { id: 'reserves', label: 'Réserves', icon: Droplet },
+  { id: 'simulation', label: 'Simulation', icon: SlidersHorizontal },
+  { id: 'vannes', label: 'Vannes', icon: Route },
+  { id: 'energie', label: 'Énergie', icon: Zap },
 ] as const
 
-export function Header({ onDemo, state }: { onDemo: () => void; state: DashboardState }) {
-  const reporting = state.sensors.filter(sensor => sensor.online).length
-  return <header className="topbar">
-    <div className="header-actions" lang="fr"><span className={'header-connectivity' + (reporting === 0 ? ' offline' : '')}><Radio size={13} /> {reporting}/{state.sensors.length} capteurs en ligne</span><span className="simulation-dot"><i /> Simulation</span><button className="button secondary demo-button" onClick={onDemo}><SlidersHorizontal size={15} /><span>Scénarios</span></button></div>
+export type Theme = 'light' | 'dark'
+
+export function Header({ state, theme, onThemeChange, connected }: {
+  state: DashboardState; theme: Theme; onThemeChange: (theme: Theme) => void;
+  connected?: { label: string; reporting: number; count: number };
+}) {
+  const reporting = connected?.reporting ?? state.sensors.filter(sensor => sensor.online).length
+  return <header className="topbar command-topbar" lang="fr">
+    <span className="command-location"><MapPin size={15} /> Borj Râs <i /> Mahdia, Tunisie</span>
+    <div className="header-actions">
+      <span className={'header-connectivity' + (reporting === 0 ? ' offline' : '')}><Radio size={14} /> {reporting}/{connected?.count ?? state.sensors.length} {connected ? 'niveaux mesurés' : 'capteurs en ligne'}</span>
+      <span className="simulation-dot"><i /> {connected?.label ?? 'Simulation'}</span>
+    </div>
+    <div className="theme-switch" role="group" aria-label="Thème d’affichage">
+      <button type="button" aria-label="Thème clair" aria-pressed={theme === 'light'} onClick={() => onThemeChange('light')}><Sun size={15} /><span>Clair</span></button>
+      <button type="button" aria-label="Thème sombre" aria-pressed={theme === 'dark'} onClick={() => onThemeChange('dark')}><Moon size={15} /><span>Sombre</span></button>
+    </div>
   </header>
 }
 
@@ -36,12 +52,20 @@ export function Severity({ incident }: { incident: Incident }) {
   return <Badge tone={tone}>{incident.severity}</Badge>
 }
 
-export function Chart({ values, threshold, unit, color = 'teal', times, timeBounds }: { values: number[]; threshold?: number; unit: string; color?: 'teal' | 'amber'; times?: number[]; timeBounds?: [number, number] }) {
+const frenchChartNumber = new Intl.NumberFormat('fr-TN', { maximumFractionDigits: 1 })
+
+export function Chart({ values, threshold, unit, color = 'teal', times, timeBounds, language = 'en' }: { values: number[]; threshold?: number; unit: string; color?: 'teal' | 'amber'; times?: number[]; timeBounds?: [number, number]; language?: 'en' | 'fr' }) {
   const gradient = useId()
   const [hover, setHover] = useState<number | null>(null)
-  const max = Math.ceil(Math.max(...values, threshold ?? 0) / (unit === 'bar' ? 1 : 2)) * (unit === 'bar' ? 1 : 2)
   const min = unit === 'bar' ? 0 : Math.max(0, Math.floor(Math.min(...values, threshold ?? Infinity) / 2) * 2 - 2)
-  const range = Math.max(max - min, 1)
+  const step = unit === 'bar' ? 1 : 2
+  const max = Math.max(min + 1, Math.ceil(Math.max(...values, threshold ?? 0) / step) * step)
+  const range = max - min
+  const format = language === 'fr' ? frenchChartNumber.format : formatNumber
+  const latest = format(values.at(-1) ?? 0) + ' ' + unit
+  const chartLabel = language === 'fr'
+    ? 'Historique des relevés. Dernière valeur : ' + latest + (threshold === undefined ? '' : '. Seuil : ' + format(threshold) + ' ' + unit)
+    : 'Reading history. Latest value ' + latest + (threshold === undefined ? '' : '. Threshold ' + format(threshold) + ' ' + unit)
   const width = 600
   const height = 150
   const padding = 10
@@ -58,10 +82,10 @@ export function Chart({ values, threshold, unit, color = 'teal', times, timeBoun
   const activePoint = hover === null ? undefined : points[hover]
   return <div className="chart">
     <div className="chart-axes">
-      {[max, max - range / 2, min].map(value => <span key={value}>{formatNumber(value)} {unit}</span>)}
+      {[max, max - range / 2, min].map(value => <span key={value}>{format(value)} {unit}</span>)}
     </div>
     <div className="chart-body">
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={`Reading history. Latest value ${formatNumber(values.at(-1) ?? 0)} ${unit}. ${threshold === undefined ? "" : `Threshold ${threshold} ${unit}.`}`}
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" role="img" aria-label={chartLabel}
         onPointerMove={event => {
           if (!points.length) return
           const rect = event.currentTarget.getBoundingClientRect()
@@ -69,14 +93,14 @@ export function Chart({ values, threshold, unit, color = 'teal', times, timeBoun
           setHover(points.reduce((best, point, index) => Math.abs(x - point[0]) <= Math.abs(x - points[best][0]) ? index : best, 0))
         }} onPointerLeave={() => setHover(null)}>
         <defs><linearGradient id={gradient} x2="0" y2="1"><stop offset="0" stopColor={shade} stopOpacity=".2" /><stop offset="100%" stopColor={shade} stopOpacity=".01" /></linearGradient></defs>
-        {[y(max), y(max - range / 2), y(min)].map(row => <line key={row} x1="0" x2={width} y1={row} y2={row} stroke="#2d4651" vectorEffect="non-scaling-stroke" />)}
+        {[y(max), y(max - range / 2), y(min)].map(row => <line key={row} x1="0" x2={width} y1={row} y2={row} stroke="var(--line)" vectorEffect="non-scaling-stroke" />)}
         <polygon points={`${padding},${height} ${line} ${last?.[0] ?? padding},${height}`} fill={`url(#${gradient})`} />
-        {threshold !== undefined && <line x1="0" x2={width} y1={y(threshold)} y2={y(threshold)} stroke="#bc8739" opacity=".65" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />}
+        {threshold !== undefined && <line x1="0" x2={width} y1={y(threshold)} y2={y(threshold)} stroke="var(--warning)" opacity=".65" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />}
         <polyline points={line} fill="none" stroke={shade} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-        {last && <circle cx={last[0]} cy={last[1]} r="4" fill={shade} stroke="#d7faf3" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />}
+        {last && <circle cx={last[0]} cy={last[1]} r="4" fill={shade} stroke="var(--white)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />}
         {activePoint && <g aria-hidden="true"><line x1={activePoint[0]} x2={activePoint[0]} y1="0" y2={height} stroke={shade} opacity=".5" vectorEffect="non-scaling-stroke" /><circle cx={activePoint[0]} cy={activePoint[1]} r="5" fill={shade} /></g>}
       </svg>
-      {activePoint && hover !== null && <span className="chart-readout" aria-hidden="true">{times ? formatTime(times[hover]) + ' · ' : ''}{formatNumber(values[hover])} {unit}</span>}
+      {activePoint && hover !== null && <span className="chart-readout" aria-hidden="true">{times ? formatTime(times[hover]) + ' · ' : ''}{format(values[hover])} {unit}</span>}
       <div className="chart-time"><span>{timeBounds ? formatTime(timeBounds[0]) : 'Oldest reading'}</span><span>{timeBounds ? formatTime(timeBounds[1]) + ' · Tunis' : 'Latest reading'}</span></div>
     </div>
   </div>
