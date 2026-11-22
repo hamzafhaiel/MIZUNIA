@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KIZUNA | Les bassins de Mahdia</title>
+  </head>
+  <body>
+    <div id="app" data-controls-overlay></div>
+    <main class="panel">
+      <p class="eyebrow">KIZUNA · BORJ RAS MAHDIA</p>
+      <h1>De la pluie au parc</h1>
+      <p id="connection" role="status">Connexion MQTT en cours…</p>
+      <button type="button" id="offline-rain" hidden>Simuler la pluie hors ligne</button>
+      <nav class="panel-nav" aria-label="Accès rapide">
+        <a href="#controls-title">Commandes</a><a href="#pressure-title">Pression</a><a href="#weather-title">Météo et solaire</a>
+      </nav>
+      <div class="basin-selector" aria-label="Bassin à superviser">
+        <button data-basin="1" aria-pressed="true">Bassin 1 <span>—</span></button>
+        <button data-basin="2" aria-pressed="false">Bassin 2 <span>—</span></button>
+        <button data-basin="3" aria-pressed="false">Bassin 3 <span>—</span></button>
+      </div>
+      <div class="reading"><strong id="level">—</strong><span>de remplissage</span></div>
+      <progress id="fill" max="100" aria-label="Remplissage du bassin"></progress>
+      <p id="phase">En attente de l’ESP32</p>
+      <details class="telemetry">
+      <summary>Mesures du bassin et du parc</summary>
+      <dl>
+        <div><dt>Pompe</dt><dd id="pump-state">—</dd></div>
+        <div><dt>Irrigation</dt><dd id="irrigation">—</dd></div>
+        <div><dt>Réseau d’eau</dt><dd id="network">—</dd></div>
+        <div><dt>Distance HC-SR04</dt><dd id="distance">—</dd></div>
+        <div><dt>Température du site</dt><dd id="temperature">—</dd></div>
+        <div><dt>Humidité du sol</dt><dd id="soil-moisture">—</dd></div>
+        <div><dt>Solaire / pompes (sim.)</dt><dd id="solar">—</dd></div>
+        <div><dt>Turbidité simulée</dt><dd id="turbidity">—</dd></div>
+      </dl>
+      </details>
+      <p id="cleaning" class="alert" hidden>Nettoyage à vérifier</p>
+      <p id="inspection" class="alert" hidden>Inspection de la maçonnerie demandée</p>
+      <section class="control-section" aria-labelledby="controls-title">
+      <h2 id="controls-title">Commandes</h2>
+      <label class="preview"><input type="checkbox" id="preview"> Aperçu 3D avec niveaux fictifs</label>
+      <div class="commands" aria-label="Commandes MQTT">
+        <button data-action="reset" disabled>Retour au départ</button>
+        <button data-action="set_manual" disabled>Lire le capteur Wokwi</button>
+        <button data-action="start_rain" disabled>Pluie sur les 3 citernes</button>
+        <button data-action="start_pump" disabled>Démarrer la pompe d’arrosage</button>
+        <button data-action="stop_pump" disabled>Arrêter la pompe d’arrosage</button>
+        <button data-action="set_drip" disabled>Goutte-à-goutte</button>
+        <button data-action="set_sprinkler" disabled>Aspersion · <span lang="ar">الرش</span></button>
+      </div>
+      <p id="feedback" role="status"></p>
+      <p id="sensor-help" class="note">En mode capteur, change la distance sur le HC-SR04 du bassin sélectionné dans Wokwi.</p>
+      <div class="commands" id="preview-actions" hidden>
+        <button type="button" id="preview-rain" aria-pressed="false">Faire pleuvoir sur les citernes</button>
+        <button type="button" id="preview-irrigation" aria-pressed="false">Démarrer la pompe d’arrosage</button>
+        <label class="preview" id="preview-sensor" hidden>Distance fictive <input type="range" id="preview-distance" min="10" max="70" value="33"> <output id="preview-distance-value" for="preview-distance"></output></label>
+      </div>
+      <div class="commands" aria-label="Détails de la maquette">
+        <button type="button" id="show-garden" aria-pressed="false">Zoom sur l’arrosage</button>
+        <button type="button" id="show-inlet" aria-pressed="false">Zoom sur l’entrée d’eau</button>
+        <button type="button" id="show-lifters">Voir les sacs descendre</button>
+      </div>
+      <label class="preview" for="sensor-choice">Capteur à observer</label>
+      <select id="sensor-choice">
+        <option value="level">Niveau HC-SR04 · citerne sélectionnée</option>
+        <option value="temperature">Température · sonde NTC</option>
+        <option value="turbidity">Turbidité · sonde représentée</option>
+        <option value="soil">Humidité du sol · jardin</option>
+        <option value="weather">Station météo · pluie, soleil et température</option>
+      </select>
+      <button type="button" id="show-sensor" aria-pressed="false">Zoom sur le capteur</button>
+      <p class="note" id="sensor-focus-reading"></p>
+      </section>
+      <section class="control-section" aria-labelledby="weather-title">
+        <h2 id="weather-title">Météo et production solaire</h2>
+        <p class="note" id="weather-status" role="status"></p>
+        <div id="weather-details">
+          <div class="commands" role="group" aria-label="Météo simulée">
+            <button type="button" data-weather-preset="sun" aria-pressed="true">Soleil</button>
+            <button type="button" data-weather-preset="clouds" aria-pressed="false">Nuages</button>
+            <button type="button" data-weather-preset="rain" aria-pressed="false">Pluie</button>
+            <button type="button" data-weather-preset="night" aria-pressed="false">Nuit</button>
+          </div>
+          <div class="weather-controls">
+            <label for="weather-irradiance">Cellule solaire <output for="weather-irradiance" data-weather="irradiance"></output></label>
+            <input type="range" id="weather-irradiance" data-weather-input="irradiance" min="0" max="1100" step="10" value="950">
+            <label for="weather-temperature">Thermomètre extérieur <output for="weather-temperature" data-weather="temperature"></output></label>
+            <input type="range" id="weather-temperature" data-weather-input="temperature" min="0" max="45" value="28">
+            <label for="weather-rain">Pluviomètre <output for="weather-rain" data-weather="rain"></output></label>
+            <input type="range" id="weather-rain" data-weather-input="rain" min="0" max="24" step="0.5" value="0">
+          </div>
+          <button type="button" id="weather-collect" disabled>Simuler la collecte dans les trois citernes</button>
+          <p class="note" id="weather-feedback" role="status"></p>
+          <dl>
+            <div><dt>Puissance solaire estimée</dt><dd data-weather="watts"></dd></div>
+            <div><dt>Énergie en 1 h à conditions constantes</dt><dd data-weather="energy"></dd></div>
+            <div><dt>Charge des pompes</dt><dd data-weather="load"></dd></div>
+            <div><dt>Production − charge</dt><dd data-weather="balance"></dd></div>
+          </dl>
+          <p class="note" id="solar-verdict"></p>
+          <p class="note">Hypothèses de démonstration · 450 Wc au total, pertes de 14 % et correction de température. La pluie et la production sont simulées sur cet écran. La collecte accélérée utilise le mode Aperçu.</p>
+        </div>
+      </section>
+      <section class="control-section" aria-labelledby="pressure-title">
+        <h2 id="pressure-title">Secours des maisons · conduite 100 m</h2>
+        <p id="backup-status" class="note" role="status"></p>
+        <div class="commands">
+          <button type="button" id="backup-toggle" aria-pressed="false">Démarrer la pompe des maisons</button>
+          <button type="button" id="backup-leak" aria-pressed="false">Simuler une fuite en service</button>
+        </div>
+        <p class="note" id="backup-feedback" role="status"></p>
+        <p class="note">Capteurs virtuels à 0 m et 100 m. Les scénarios ci-dessous testent la conduite à l’arrêt.</p>
+        <div class="commands pressure-scenarios">
+          <button type="button" data-pressure-scenario="normal" aria-pressed="false">Scénario 1 · Conduite sans fuite</button>
+          <button type="button" data-pressure-scenario="leak" aria-pressed="false">Scénario 2 · Fuite à 50 m</button>
+        </div>
+        <div id="pressure-readings" hidden>
+          <p class="note" id="pressure-context"></p>
+          <div id="pressure-verdict" role="status"><strong></strong><span></span></div>
+          <dl class="pressure-endpoints">
+            <div><dt>A · Entrée à 0 m</dt><dd data-pressure="inletBar"></dd></div>
+            <div><dt>B · Sortie à 100 m</dt><dd data-pressure="outletBar"></dd></div>
+          </dl>
+          <div class="loss-meter">
+            <label for="expected-loss">Perte normale <strong data-pressure="expectedDropBar"></strong></label>
+            <meter id="expected-loss" min="0" max="0.7"></meter>
+            <label for="measured-loss">Perte mesurée <strong data-pressure="measuredDropBar"></strong></label>
+            <meter id="measured-loss" min="0" max="0.7"></meter>
+          </div>
+          <p class="note">Seuil d’alerte : plus de <strong data-pressure="alertThresholdBar"></strong> au-dessus de la perte normale.</p>
+          <div class="commands pressure-actions">
+            <button type="button" id="show-pressure" aria-pressed="false">Zoom sur la conduite</button>
+            <button type="button" id="pressure-stop">Arrêter le test</button>
+          </div>
+        </div>
+      </section>
+      <p class="note">Maquette · diamètre 9,4 m, profondeur utile 60 cm. Débits accélérés en points/s · pluie +4, goutte-à-goutte −3, aspersion −4,5. Arrêt à 20 %.</p>
+    </main>
+    <p class="scene-key">Citernes · Parc hydraulique · Secours non potable<br><small>Glisser pour tourner · Molette pour zoomer</small></p>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

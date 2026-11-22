@@ -1,0 +1,25 @@
+:root { font: 500 .9rem/1.4 system-ui, sans-serif; color-scheme: dark; background: #14221e; color: #f4f9f6; }
+body { display: grid; grid-template-rows: auto minmax(280px, 1fr) auto; min-height: 100vh; min-height: 100dvh; margin: 0; }
+.scene-header, .scene-links { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem 1rem; }
+.scene-header { justify-content: space-between; padding: .75rem 1rem; }
+.scene-header h1 { margin: 0; font-size: clamp(1.08rem, 2vw, 1.4rem); }
+.scene-header a { color: #c1fac1; text-underline-offset: .22em; }
+#scene-status { color: #b3cdc1; }
+.scene-stage { position: relative; min-width: 0; background: #293632; }
+#app { position: absolute; inset: 0; }
+#app canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.scene-tools { padding: .7rem 1rem; border-top: 1px solid #426056; }
+.scene-basins, .scene-controls, .scene-generator { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+.scene-generator { margin-top: .5rem; }
+.scene-generator span { color: #b3cdc1; }
+.scene-controls { margin-block: .4rem; }
+.scene-tools summary { margin-top: .4rem; cursor: pointer; color: #b3cdc1; }
+.scene-tools :is(button, select) { border: 1px solid #526e61; background: #263b32; color: inherit; border-radius: .45rem; min-height: 32px; padding: .25rem .5rem; font: inherit; }
+.scene-tools button:not(:disabled) { cursor: pointer; }
+.scene-tools button:disabled { opacity: .55; }
+.scene-tools button span { margin-left: .2rem; color: #c6ded2; }
+.scene-tools button[aria-pressed=true] { border-color: #a8efaa; color: #c1fac1; background: #304b38; }
+:focus-visible { outline: 2px solid #bcf7c3; outline-offset: 2px; }
+#scene-fallback { position: absolute; inset: 0; display: grid; place-content: center; margin: 0; padding: 1.5rem; text-align: center; color: white; }
+#scene-waiting { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 36px); margin: 0; padding: .45rem .75rem; border-radius: .45rem; background: #14221e; text-align: center; pointer-events: none; }
+[hidden] { display: none !important; }

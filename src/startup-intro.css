@@ -1,0 +1,246 @@
+@media (max-width: 1020px) {
+  .command-header .header-connectivity { display: none; }
+}
+
+.fas-intro {
+  --intro-ink: #f1f6ed;
+  --intro-mint: #bff4d9;
+  --intro-display: "Space Grotesk Variable", sans-serif;
+  --intro-reveal: cubic-bezier(.2,.72,.23,1);
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: #071a19;
+  color: var(--intro-ink);
+}
+
+.fas-intro[open] { animation: intro-handoff .52s cubic-bezier(.58,0,.32,1) 5.5s both; }
+.fas-intro::backdrop { background: transparent; }
+.fas-intro-stage, .fas-intro-grade { position: absolute; inset: 0; pointer-events: none; }
+
+.fas-intro-coast {
+  position: absolute;
+  inset: -3%;
+  background: url('/intro-coast.webp') 64% 55% / cover no-repeat;
+  filter: saturate(.76) brightness(.78);
+  transform-origin: 69% 49%;
+  animation: intro-coast 3.05s var(--intro-reveal) 1.20s both;
+}
+
+.fas-intro-macro {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 48%, #18584d 0%, #0b302c 25%, #071a19 61%, #050e11 96%);
+  animation: intro-macro 1.82s ease-in-out both;
+}
+.fas-intro-optics {
+  position: absolute;
+  width: min(86vw, 730px);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 46%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 47px, #b9fce624 48px 49px, transparent 50px 92px),
+    conic-gradient(from 40deg, transparent 54deg, #d8bf8d45 59deg, transparent 86deg, transparent 237deg, #74f1c545 248deg, transparent 278deg);
+  mask-image: radial-gradient(circle, transparent 13%, #000 24%, #0009 58%, transparent 70%);
+  animation: intro-optics 1.8s var(--intro-reveal) both;
+}
+.fas-intro-macro-drop {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  width: min(71vw, 490px, 68vh);
+  aspect-ratio: 400 / 440;
+  animation: intro-macro-drop 1.75s cubic-bezier(.25,.7,.25,1) both;
+}
+.fas-intro-macro-drop canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fas-intro-macro-drop > div {
+  position: absolute;
+  inset: 26% 25% 25%;
+  border-radius: 73% 23% 71% 67%;
+  transform: rotate(-41deg);
+  background: radial-gradient(ellipse at 34% 24%, #d8fff3 0%, #59e3b9c0 14%, transparent 37%),
+    radial-gradient(ellipse at 81% 82%, #d0b678 0%, #248b71 35%, #0c3734 68%);
+  box-shadow: inset 0 0 12px #dbffe5, 0 0 43px #4ccaa865;
+}
+.fas-intro[data-glass] .fas-intro-macro-drop > div { opacity: 0; }
+.fas-intro-macro-caption {
+  position: absolute;
+  bottom: 16%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: #d2f3de;
+  font: 600 clamp(11px, 1.25vw, 16px) var(--intro-display);
+  letter-spacing: .31em;
+  text-transform: uppercase;
+  animation: intro-fade-up .52s var(--intro-reveal) .18s both;
+}
+.fas-intro-grade {
+  background:
+    linear-gradient(90deg, #071a19 0%, #071a19ee 19%, #071a1980 53%, transparent 76%),
+    linear-gradient(0deg, #071816e8, transparent 26%, transparent 76%, #061612aa),
+    radial-gradient(ellipse at 70% 56%, transparent 28%, #06181468 87%);
+}
+
+.fas-intro-water {
+  position: absolute;
+  width: min(790px, 88vw);
+  height: min(540px, 78vh);
+  left: 47%;
+  top: 49%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.fas-intro-water canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.fas-intro-drop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(29px, 4.6vw, 68px);
+  aspect-ratio: 1;
+  border-radius: 73% 39% 72% 66%;
+  background:
+    radial-gradient(ellipse at 31% 64%, #e8ffeb 1%, #e1ffda90 7%, transparent 23%),
+    radial-gradient(ellipse at 65% 58%, #35ffe4a0 0%, #1f9585 30%, #0c4038 53%, #063632 66%, #adf7ca 92%);
+  box-shadow: inset 0 0 9px #c7ffe1, 0 0 30px #2ee9b85c;
+  animation: intro-drop .48s cubic-bezier(.47,.04,.92,.77) 1.45s both;
+}
+
+.fas-intro-atlas {
+  position: absolute;
+  top: 50%;
+  left: 68%;
+  width: min(73vw, 1180px);
+  aspect-ratio: 1680 / 1175;
+  transform-origin: 52% 54%;
+  transform: translate(-50%, -50%);
+  background: url('/borj-ras-map.webp') center / 100% 100% no-repeat;
+  mask-image: radial-gradient(ellipse 66% 66%, #000 44%, #000c 65%, transparent 96%);
+  animation: intro-atlas 2.25s var(--intro-reveal) 3.05s both;
+}
+.fas-intro-scanner {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 43%, #dcffe680 49.5%, #dbffe9dd 50%, transparent 50.6%);
+  mix-blend-mode: screen;
+  animation: intro-scan 1.24s cubic-bezier(.29,.37,.28,1) 3.22s both;
+}
+.fas-intro-atlas-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, #c7ffdc16 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(90deg, #c7ffdc16 0 1px, transparent 1px 30px),
+    linear-gradient(155deg, transparent 37%, #b9ffc62b 50%, transparent 54%);
+  mix-blend-mode: screen;
+}
+.fas-intro-point { position: absolute; z-index: 2; color: var(--intro-mint); transform: translate(-50%, -50%); }
+.fas-intro-point i, .fas-intro-point::after { display: block; width: 9px; height: 9px; border-radius: 50%; }
+.fas-intro-point i { background: currentColor; box-shadow: 0 0 16px #bff4d9; animation: intro-beacon .47s var(--intro-reveal) var(--ping) both; }
+.fas-intro-point::after { content: ''; position: absolute; inset: 0; border: 1px solid currentColor; animation: intro-beacon-ring 1.08s var(--intro-reveal) var(--ping) both; }
+.fas-intro-point small {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  padding: 3px 6px;
+  border: 1px solid #bff4d96b;
+  border-radius: 3px;
+  background: #0a2525;
+  font: 650 10px var(--intro-display);
+  white-space: nowrap;
+  animation: intro-fade-up .45s var(--intro-reveal) calc(var(--ping) + .12s) both;
+}
+
+.fas-intro-layout { position: relative; z-index: 3; display: grid; grid-template-rows: auto 1fr auto; height: 100%; padding: clamp(18px, 4vw, 61px); }
+.fas-intro-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fas-intro-place { display: inline-flex; align-items: center; gap: 9px; color: var(--intro-mint); font: 650 clamp(10px, 1vw, 13px) var(--intro-display); letter-spacing: .15em; white-space: nowrap; }
+.fas-intro-place i { width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+.fas-intro-skip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 8px 13px;
+  border: 1px solid #bff4d95c;
+  border-radius: 5px;
+  background: #071a19d9;
+  color: var(--intro-ink);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.fas-intro-skip:hover { background: #254c42; }
+.fas-intro-skip:focus-visible { outline: 2px solid var(--intro-mint); outline-offset: 4px; }
+.fas-intro-copy { align-self: center; padding-bottom: 3vh; }
+.fas-intro-copy h1 {
+  overflow: hidden;
+  margin: 0;
+  font: 650 clamp(76px, 13vw, 221px)/.95 var(--intro-display);
+  letter-spacing: -.105em;
+  text-shadow: 0 2px 30px #05151385;
+}
+.fas-intro-copy h1 span { display: inline-block; padding: .03em .12em .09em 0; animation: intro-wordmark .97s var(--intro-reveal) 1.89s both; }
+.fas-intro-copy p { margin: 5px 0 0 4px; color: var(--intro-mint); font: 500 clamp(16px, 2vw, 27px)/1.2 var(--intro-display); animation: intro-fade-up .74s var(--intro-reveal) 2.40s both; }
+.fas-intro-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 12px; color: #c9e1d5; font: 500 13px var(--intro-display); }
+.fas-intro-credit { font-size: 11px; animation: intro-fade-up .4s var(--intro-reveal) 3.28s both; }
+.fas-intro-edge { position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, #48aa8a, #c9ffe0); animation: intro-timeline 5.5s linear both; }
+
+@keyframes intro-macro { 0%, 64% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes intro-optics {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.83) rotate(-8deg); }
+  40% { opacity: .75; }
+  to { opacity: .4; transform: translate(-50%, -50%) scale(1.18) rotate(6deg); }
+}
+@keyframes intro-macro-drop {
+  0% { opacity: 0; transform: translate(-50%, -61%) scale(.74); }
+  27% { opacity: 1; }
+  70% { opacity: 1; transform: translate(-50%, -51%) scale(1.12); }
+  100% { opacity: 0; transform: translate(-50%, 30vh) scale(.55, 1.28); }
+}
+@keyframes intro-scan {
+  from { transform: translateX(-52%) skewX(-14deg); opacity: .22; }
+  46% { opacity: .73; }
+  to { transform: translateX(56%) skewX(-14deg); opacity: 0; }
+}
+@keyframes intro-coast {
+  0% { opacity: .28; transform: scale(1.13) translate(1%, 1%); }
+  29%, 56% { opacity: .94; }
+  100% { opacity: .18; transform: scale(1.025); }
+}
+@keyframes intro-atlas {
+  0% { opacity: 0; transform: translate(-50%, -46%) scale(.9); }
+  49% { opacity: 1; }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes intro-drop {
+  0% { opacity: 0; transform: translate(-50%, calc(-50% - 28vh)) rotate(-37deg) scale(.65, .85); }
+  24% { opacity: 1; }
+  89% { opacity: 1; transform: translate(-50%, -50%) rotate(-37deg) scale(.85, 1.05); }
+  100% { opacity: 0; transform: translate(-50%, -32%) rotate(-37deg) scale(1.18, .35); }
+}
+@keyframes intro-beacon { from { opacity: 0; transform: scale(.25); } 57% { transform: scale(1.35); } to { opacity: 1; transform: scale(1); } }
+@keyframes intro-beacon-ring { from { opacity: .8; transform: scale(.7); } to { opacity: 0; transform: scale(5.2); } }
+@keyframes intro-wordmark { from { opacity: .05; transform: translateY(105%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes intro-fade-up { from { opacity: 0; transform: translateY(11px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes intro-timeline { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes intro-handoff { from { opacity: 1; } to { opacity: 0; } }
+
+@media (max-width: 680px) {
+  .fas-intro-coast { background-position: 58% 45%; }
+  .fas-intro-grade { background: linear-gradient(0deg, #071a19 9%, #071a19e6 31%, #071a1924 65%, #071a19bd); }
+  .fas-intro-atlas { left: 52%; top: 40%; width: 119vw; }
+  .fas-intro-water { left: 59%; top: 42%; }
+  .fas-intro-copy { align-self: end; padding-bottom: clamp(40px, 9vh, 100px); }
+  .fas-intro-copy h1 { font-size: clamp(70px, 20vw, 124px); }
+}

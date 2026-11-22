@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#091e27" />
+    <meta name="description" content="Fas9ia water operations dashboard for the Borj Eras pilot." />
+    <title>Fas9ia · Borj Eras Operations</title>
+    <style>
+      body { margin: 0; background: #071a19; }
+      #startup-shell { position: fixed; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; background: #071a19; color: #e9f7ed; font: 500 13px system-ui, sans-serif; }
+      #startup-shell strong { font-size: clamp(40px, 11vw, 82px); line-height: 1; letter-spacing: -.09em; }
+      #startup-shell::before { content: ''; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, #d9ffec 0 4px, #42c9a555 5px, transparent 43%); box-shadow: inset 0 0 0 1px #8ef4dc55, 0 0 23px #8ef4dc35; animation: boot-signal 1.35s ease-out infinite; }
+      #root:not(:empty) + #startup-shell { display: none; }
+      @keyframes boot-signal { 0% { opacity: .5; transform: scale(.7); } 35% { opacity: 1; } 100% { opacity: .45; transform: scale(1.15); } }
+      @media (prefers-reduced-motion: reduce) { #startup-shell::before { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="startup-shell" role="status"><strong>FAS9IA</strong><span>Loading the dashboard</span><noscript>JavaScript is required to open the dashboard.</noscript></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

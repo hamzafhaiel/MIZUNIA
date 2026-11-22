@@ -1,0 +1,44 @@
+.valve-illustration { --valve-handle: #af6554; position: relative; display: block; width: min(100%, 181px); height: 101px; border-radius: 10px; user-select: none; }
+.valve-illustration:not([aria-disabled="true"]) { cursor: grab; touch-action: none; }
+.valve-illustration:not([aria-disabled="true"]):active { cursor: grabbing; }
+.valve-illustration:active .valve-arm { transition: none; }
+.valve-pivot { position: absolute; left: 50%; bottom: 27px; pointer-events: none; }
+.valve-track { position: absolute; width: 94px; height: 48px; top: 22px; left: 50%; transform: translateX(-50%); border: 1px dashed var(--control-line); border-bottom: 0; border-radius: 100px 100px 0 0; }
+.valve-illustration:not([aria-disabled="true"]):hover .valve-track { border-color: var(--accent-line); }
+.valve-pipe { position: absolute; inset: auto 2% 16px; height: 22px; border: 1px solid #66818a; border-radius: 7px; background: linear-gradient(#263b40, #849ea2 30%, #445d63 65%, #24373e); }
+.valve-collar { position: absolute; z-index: 1; left: 50%; bottom: 11px; width: 34px; height: 32px; transform: translateX(-50%); border: 1px solid #76939a; border-radius: 9px; background: linear-gradient(115deg, #334b51, #88a2a7 48%, #344a52); }
+.valve-arm { position: absolute; z-index: 2; bottom: 27px; left: 50%; height: 45px; width: 8px; margin-left: -4px; border-radius: 6px; background: linear-gradient(90deg, #45585f, #a2b8ba 52%, #627b80); transform: rotate(var(--valve-angle, -49deg)); transform-origin: center bottom; transition: transform var(--motion-control, .2s) var(--motion-ease, ease); }
+.valve-arm::after { content: ""; position: absolute; left: 50%; bottom: -4px; width: 11px; height: 11px; transform: translateX(-50%); border: 1px solid #abc0c5; border-radius: 50%; background: #465f67; }
+.valve-arm i { position: absolute; top: -4px; left: 50%; width: 25px; height: 14px; transform: translateX(-50%); border-radius: 4px; background: var(--valve-handle); box-shadow: inset 0 2px 2px #fff4, inset 0 -2px 2px #0004; }
+.valve-station { min-width: 0; }
+.station-heading, .station-pilot-head, .station-bank-heading, .station-line > header {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+}
+.station-heading { margin-bottom: 14px; }
+.station-heading h1 { font: 650 clamp(25px, 3vw, 37px)/1.1 var(--display); letter-spacing: -.04em; }
+.station-heading .back-link { margin-bottom: 6px; }
+.station-heading .button.station-stop { color: var(--danger); border-color: var(--danger-line); background: var(--danger-soft); }
+.station-pilot, .station-line { padding: 13px; }
+.station-pilot h2, .station-bank-heading h2 { display: flex; gap: 7px; align-items: center; font: 650 18px/1.1 var(--display); }
+.station-pilot h2 svg, .station-bank-heading h2 svg { color: var(--accent); }
+.station-pilot p, .station-bank-heading p, .station-line p { margin-top: 5px; color: var(--muted); font-size: 11px; }
+.station-meter-strip { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; margin: 12px 0 0; }
+.station-meter-strip > div { min-width: 0; padding: 8px; border-radius: 7px; background: var(--raised); }
+.station-meter-strip dt { display: flex; gap: 5px; align-items: center; color: var(--muted); font-size: 11px; }
+.station-meter-strip dd { margin-top: 4px; color: var(--accent); font: 700 clamp(16px, 2vw, 25px)/1 var(--display); }
+.station-meter-strip dd small, .station-line-level small { color: var(--muted); font-size: 11px; }
+.station-bank-heading { margin: 18px 0 9px; }
+.station-valve-instruction { margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+.station-bank { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+.station-line h3 { margin: 0; font-size: 15px; }
+.station-line p { display: flex; gap: 4px; align-items: center; }
+.station-line-state { padding: 4px 6px; border-radius: 6px; background: var(--raised); color: var(--muted); font-size: 10px; font-weight: 750; }
+.station-line[data-flowing="true"] .station-line-state { color: var(--accent); background: var(--accent-soft); }
+.station-line .valve-illustration { margin: 1px auto; }
+:is(.station-line[data-flowing="true"], .kz-equipment[data-valve-flow="true"]) .valve-arm { --valve-handle: #79bb59; }
+:is(.station-line[data-flowing="true"], .kz-equipment[data-valve-flow="true"]) .valve-pipe { border-color: #71a88f; box-shadow: 0 0 12px #54dd9d3d; }
+.station-line-level { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 7px 0; border-block: 1px solid var(--line); font-size: 12px; }
+.station-line-level dt { color: var(--muted); font-size: 11px; }
+.station-line-level dd { margin-top: 4px; color: var(--accent); font: 700 18px/1 var(--display); }
+@media (max-width: 1120px) { .station-bank { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 540px) { .station-bank { grid-template-columns: minmax(0,1fr); } .station-meter-strip dt svg { display: none; } }
